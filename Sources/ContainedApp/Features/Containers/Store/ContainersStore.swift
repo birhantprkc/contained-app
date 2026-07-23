@@ -43,7 +43,12 @@ final class ContainerMetricsState {
 final class ContainersStore {
     private static let minimumStreamedStatsInterval: TimeInterval = 1
 
-    var snapshots: [Core.Container.Snapshot] = []
+    var snapshots: [Core.Container.Snapshot] = [] {
+        didSet {
+            if snapshots != oldValue { inventoryRevision &+= 1 }
+        }
+    }
+    private(set) var inventoryRevision = 0
     @ObservationIgnored
     var statsByID: [String: Core.Metrics.StatsDelta] = [:]
     /// Per-container, per-metric sparkline history.
@@ -59,6 +64,7 @@ final class ContainersStore {
     @ObservationIgnored var now: () -> Date = Date.init
     @ObservationIgnored private var metricsStates: [String: ContainerMetricsState] = [:]
     @ObservationIgnored private var statsNormalizationContext: Core.Metrics.NormalizationContext = .containerSpecific
+    @ObservationIgnored private var lastPersistedInventory: [Core.Container.Snapshot]?
 
     var client: Core.Orchestrator?
 
@@ -144,8 +150,19 @@ final class ContainersStore {
         do {
             let inventory = try await client.containerInventory(all: true)
             let listedAll = inventory.items
-                .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
-            database?.upsertContainers(listedAll)
+                .sorted { lhs, rhs in
+                    let comparison = lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName)
+                    return comparison == .orderedSame ? lhs.scopedID < rhs.scopedID : comparison == .orderedAscending
+                }
+            if let database, listedAll != lastPersistedInventory {
+                let persistence = await database.upsertContainers(listedAll)
+                diagnosticLogger.debug("Inventory persistence listed=\(listedAll.count, privacy: .public) changed=\(persistence.inserted + persistence.updated, privacy: .public) encoded=\(persistence.encoded, privacy: .public) persisted=\(persistence.persisted, privacy: .public) skipped=\(persistence.unchanged, privacy: .public)")
+                if persistence.succeeded {
+                    lastPersistedInventory = listedAll
+                }
+            } else if database != nil {
+                diagnosticLogger.debug("Inventory persistence listed=\(listedAll.count, privacy: .public) changed=0 encoded=0 persisted=0 skipped=\(listedAll.count, privacy: .public)")
+            }
             let migratingIDs = database?.hiddenContainerScopedIDs() ?? []
             let listed = listedAll.filter { !migratingIDs.contains($0.scopedID) }
             // Only publish when the list actually changed: reassigning an identical array would
@@ -195,35 +212,27 @@ final class ContainersStore {
         let rawInterval = lastStreamedStatsDate.map { observedAt.timeIntervalSince($0) }
         let interval = max(rawInterval ?? Self.minimumStreamedStatsInterval, Self.minimumStreamedStatsInterval)
         let snapshotsByID = snapshotLookupByStatsID()
-        var nextStats = statsByID
-        var nextHistory = historyByID
         for sample in samples {
             let delta = Core.Metrics.StatsDelta.from(snapshot: sample,
                                         previous: lastStreamedStats[sample.id],
                                         interval: interval)
-            record(delta, snapshot: snapshotsByID[sample.id], stats: &nextStats, history: &nextHistory)
-            metricsStates[sample.id]?.update(stats: delta, historyByMetric: nextHistory[sample.id] ?? [:])
+            // These dictionaries are observation-ignored. Mutate only the affected container
+            // instead of copying every running container's chart history for each stream frame.
+            statsByID[delta.id] = delta
+            var metrics = historyByID[delta.id] ?? [:]
+            for metric in Core.Metrics.GraphMetric.allCases {
+                var buffer = metrics[metric] ?? UI.Chart.SampleBuffer()
+                buffer.append(metric.value(from: delta,
+                                           snapshot: snapshotsByID[delta.id],
+                                           normalization: statsNormalizationContext))
+                metrics[metric] = buffer
+            }
+            historyByID[delta.id] = metrics
+            metricsStates[delta.id]?.update(stats: delta, historyByMetric: metrics)
             lastStreamedStats[sample.id] = sample
         }
-
-        if nextStats != statsByID { statsByID = nextStats }
-        if nextHistory != historyByID { historyByID = nextHistory }
         lastStreamedStatsDate = observedAt
         statsRevision &+= 1
-    }
-
-    private func record(_ delta: Core.Metrics.StatsDelta,
-                        snapshot: Core.Container.Snapshot?,
-                        stats: inout [String: Core.Metrics.StatsDelta],
-                        history: inout [String: [Core.Metrics.GraphMetric: UI.Chart.SampleBuffer]]) {
-        stats[delta.id] = delta
-        var metrics = history[delta.id] ?? [:]
-        for metric in Core.Metrics.GraphMetric.allCases {
-            var buffer = metrics[metric] ?? UI.Chart.SampleBuffer()
-            buffer.append(metric.value(from: delta, snapshot: snapshot, normalization: statsNormalizationContext))
-            metrics[metric] = buffer
-        }
-        history[delta.id] = metrics
     }
 
     private func rebuildDisplayHistories() {

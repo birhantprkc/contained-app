@@ -142,7 +142,9 @@ struct ContainerCard: View {
                      title: name,
                      subtitle: Format.shortImage(snapshot.image),
                      subtitleStyle: .monospaced,
-                     pages: cardPages) {
+                     // Compact cards never expose page controls. Keeping this nil also avoids
+                     // constructing all detail-page buttons for every card in a large grid.
+                     pages: isExpanded ? cardPages : nil) {
             iconChip
         } titleAccessory: {
             EmptyView()
@@ -403,13 +405,11 @@ struct ContainerCard: View {
 }
 
 private struct DeferredContainerPage<Content: View>: View {
-    private let delay: Duration
     @ViewBuilder var content: () -> Content
 
     @State private var isReady = false
 
-    init(delay: Duration = .milliseconds(60), @ViewBuilder content: @escaping () -> Content) {
-        self.delay = delay
+    init(@ViewBuilder content: @escaping () -> Content) {
         self.content = content
     }
 
@@ -424,7 +424,7 @@ private struct DeferredContainerPage<Content: View>: View {
         }
         .task {
             isReady = false
-            try? await Task.sleep(for: delay)
+            await Task.yield()
             guard !Task.isCancelled else { return }
             isReady = true
         }

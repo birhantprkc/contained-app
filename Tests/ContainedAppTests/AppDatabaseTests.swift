@@ -99,8 +99,64 @@ struct AppDatabaseTests {
         #expect(record.snapshotData != nil)
         #expect(record.documentData != nil)
 
-        database.upsertContainers([])
+        _ = await database.upsertContainers([])
         #expect(database.fetch(ContainerRecord.self).isEmpty)
+    }
+
+    @Test func unchangedRuntimeInventoryDoesNotRewriteRecords() async throws {
+        let database = AppDatabase(isStoredInMemoryOnly: true)
+        let runner = DockerRecordingRunner()
+        let store = ContainersStore()
+        store.database = database
+        store.client = appTestOrchestrator(runner: runner,
+                                           cliURL: URL(fileURLWithPath: "/usr/local/bin/docker"),
+                                           runtimeKind: .docker)
+
+        await store.refresh()
+        let snapshot = try #require(store.snapshots.first)
+        let original = try #require(database.fetch(ContainerRecord.self).first)
+        let initialUpdatedAt = original.updatedAt
+
+        let result = await database.upsertContainers([snapshot], observedAt: initialUpdatedAt.addingTimeInterval(60))
+
+        #expect(try #require(database.fetch(ContainerRecord.self).first).updatedAt == initialUpdatedAt)
+        #expect(result.unchanged == 1)
+        #expect(result.encoded == 0)
+        #expect(result.persisted == 0)
+    }
+
+    @Test func changedInventoryEncodesOnlyChangedContainersAndReusesMissingPayloads() async throws {
+        let database = AppDatabase(isStoredInMemoryOnly: true)
+        let first = Core.Container.Snapshot.placeholder(id: "first", image: "example/first:latest",
+                                                        runtimeKind: .appleContainer)
+        let second = Core.Container.Snapshot.placeholder(id: "second", image: "example/second:latest",
+                                                         runtimeKind: .appleContainer)
+        let initial = await database.upsertContainers([first, second])
+        #expect(initial.encoded == 2)
+
+        let stoppedFirst = Core.Container.Snapshot.placeholder(id: "first", image: "example/first:latest",
+                                                               state: .stopped,
+                                                               runtimeKind: .appleContainer)
+        let changed = await database.upsertContainers([stoppedFirst, second])
+        #expect(changed.encoded == 1)
+        #expect(changed.updated == 1)
+        #expect(changed.unchanged == 1)
+
+        let record = try #require(database.fetch(ContainerRecord.self)
+            .first { $0.scopedID == second.scopedID })
+        let documentData = record.documentData
+        let snapshotData = record.snapshotData
+        record.isMissing = true
+        record.missingSince = Date()
+        database.save()
+
+        let restored = await database.upsertContainers([stoppedFirst, second])
+        #expect(restored.encoded == 0)
+        #expect(restored.updated == 1)
+        #expect(restored.unchanged == 1)
+        #expect(record.documentData == documentData)
+        #expect(record.snapshotData == snapshotData)
+        #expect(record.isMissing == false)
     }
 
     @Test func missingContainerWithAppOwnedMetadataIsRetained() async throws {
@@ -118,7 +174,7 @@ struct AppDatabaseTests {
         database.context.insert(HealthCheckRecord(containerScopedID: "docker::web", valueData: data))
         database.save()
 
-        database.upsertContainers([])
+        _ = await database.upsertContainers([])
 
         let record = try #require(database.fetch(ContainerRecord.self).first)
         #expect(record.scopedID == "docker::web")
@@ -139,7 +195,7 @@ struct AppDatabaseTests {
         let source = try #require(store.snapshots.first)
         let document = Core.Schema.Document.containerEdit(from: source.configuration)
         database.markContainerRecreateStarted(source: source, sourceDocument: document)
-        database.upsertContainers([])
+        _ = await database.upsertContainers([])
 
         let retained = try #require(database.fetch(ContainerRecord.self).first)
         #expect(retained.isMissing)
@@ -179,7 +235,7 @@ struct AppDatabaseTests {
         database.setLinkedVolumePaths(links, for: "docker::web")
         #expect(database.linkedVolumePaths(for: "docker::web") == links)
 
-        database.upsertContainers([])
+        _ = await database.upsertContainers([])
 
         let record = try #require(database.fetch(ContainerRecord.self).first)
         #expect(record.scopedID == "docker::web")
@@ -206,10 +262,10 @@ struct AppDatabaseTests {
     @Test func imageUpdateStatusIsRuntimeScopedAtTagLevel() {
         let database = AppDatabase(isStoredInMemoryOnly: true)
         let app = AppModel(database: database)
-        app.images = [
+        app.setImages([
             image(reference: "nginx:latest", id: "sha256:1", digest: "sha256:old", runtimeKind: .appleContainer),
             image(reference: "docker.io/library/nginx:latest", id: "sha256:2", digest: "sha256:new", runtimeKind: .docker),
-        ]
+        ])
 
         let appleKey = app.imageUpdateKey("nginx:latest", runtimeKind: .appleContainer)
         let dockerKey = app.imageUpdateKey("nginx:latest", runtimeKind: .docker)
@@ -226,6 +282,26 @@ struct AppDatabaseTests {
         #expect(tags[appleKey]?.updateStatusData != nil)
         #expect(tags[dockerKey]?.updateStatusData != nil)
         #expect(database.fetch(ImageRecord.self).first?.updateStatusData == nil)
+    }
+
+    @Test func duplicateLegacyImageTagRecordsDoNotPreventLaunch() {
+        let database = AppDatabase(isStoredInMemoryOnly: true)
+        let key = "apple-container::docker.io/library/nginx:latest"
+        database.context.insert(ImageTagRecord(scopedID: key,
+                                              imageIdentity: "nginx",
+                                              reference: "nginx:latest",
+                                              runtimeKindRaw: Core.Runtime.Kind.appleContainer.rawValue,
+                                              runtimeImageID: "first"))
+        database.context.insert(ImageTagRecord(scopedID: key,
+                                              imageIdentity: "nginx",
+                                              reference: "nginx:latest",
+                                              runtimeKindRaw: Core.Runtime.Kind.appleContainer.rawValue,
+                                              runtimeImageID: "second"))
+        database.save()
+
+        database.updateImageStatuses([key: .resolved(localDigest: "sha256:old", remoteDigest: "sha256:new")])
+
+        #expect(database.fetch(ImageTagRecord.self).contains { $0.updateStatusData != nil })
     }
 
     @Test func defaultAppSupportedRuntimesKeepDockerDormant() {

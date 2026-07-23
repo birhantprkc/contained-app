@@ -18,6 +18,24 @@ struct ContainersStoreRefreshTests {
         #expect(store.statsRevision == 0)
     }
 
+    @Test func identicalRefreshSkipsInventoryPersistenceEntirely() async {
+        let database = AppDatabase(isStoredInMemoryOnly: true)
+        let runner = RecordingRunner()
+        let store = ContainersStore()
+        store.database = database
+        store.client = Core.Orchestrator.testing(runner: runner,
+                                                 runtimeKind: .appleContainer)
+
+        await store.refresh()
+        let preparations = database.containerInventoryPreparationCount
+        let encodings = database.containerInventoryEncodedCount
+        await store.refresh()
+
+        #expect(preparations == 1)
+        #expect(database.containerInventoryPreparationCount == preparations)
+        #expect(database.containerInventoryEncodedCount == encodings)
+    }
+
     @Test func dockerRefreshScopesSnapshotsAndRoutesLifecycle() async throws {
         let runner = DockerRecordingRunner()
         let store = ContainersStore()
@@ -287,6 +305,29 @@ struct ContainersStoreRefreshTests {
                                                      normalization: machine)
         #expect(machinePoints.map { $0.cpuPercent } == [25, 12.5])
         #expect(machinePoints.map { $0.memoryPercent } == [25, 50])
+    }
+
+    @Test func historyChartDownsamplingBoundsRenderedMarks() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        var samples: [MetricSampleSnapshot] = []
+        for offset in 0..<1_201 {
+            let value = Double(offset)
+            let sample = MetricSampleSnapshot(timestamp: start.addingTimeInterval(value),
+                                              containerID: "web",
+                                              cpuFraction: value,
+                                              memoryBytes: value,
+                                              netRxBytesPerSec: value,
+                                              netTxBytesPerSec: value,
+                                              diskReadBytesPerSec: value,
+                                              diskWriteBytesPerSec: value)
+            samples.append(sample)
+        }
+
+        let downsampled = HistoryChartPoint.downsample(samples, maximumPoints: 120)
+
+        #expect(downsampled.count == 120)
+        #expect(downsampled.first!.timestamp >= samples.first!.timestamp)
+        #expect(downsampled.last!.timestamp <= samples.last!.timestamp)
     }
 
     @Test func changingStatsNormalizationRebuildsDisplayHistories() {

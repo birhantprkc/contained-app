@@ -20,13 +20,12 @@ enum HistoryRange: String, CaseIterable, Identifiable {
 }
 
 /// The "rewind" tab: persistent CPU / memory / network history for one container, plus its event
-/// log — the long-term counterpart to the live sparklines. Backed by SwiftData via `@Query`.
+/// log — the long-term counterpart to the live sparklines.
 struct ContainerHistoryTab: View {
     @Environment(AppModel.self) private var app
     let snapshot: Core.Container.Snapshot
     @State private var range: HistoryRange = .day
-    /// Window start, recomputed only when the range changes (not per render) so the windowed `@Query`
-    /// inside `ContainerHistoryWindow` isn't rebuilt on every layout pass.
+    /// Window start, recomputed only when the range changes so obsolete actor loads can be cancelled.
     @State private var cutoff = Date().addingTimeInterval(-HistoryRange.day.seconds)
 
     var body: some View {
@@ -47,27 +46,23 @@ struct ContainerHistoryTab: View {
     }
 }
 
-/// The charts + event list for one container, scoped to a time window. The window is pushed straight
-/// into the SwiftData `@Query` predicates, so only the visible range is fetched — not the container's
-/// entire retained history (which an unbounded query then re-filtered on every render).
+/// The charts + event list for one container. A model actor fetches only this window and returns
+/// value-semantic rows rather than exposing SwiftData models to the view.
 private struct ContainerHistoryWindow: View {
+    @Environment(AppModel.self) private var app
     private let snapshot: Core.Container.Snapshot
+    private let cutoff: Date
     private let normalization: Core.Metrics.NormalizationContext
-    @Query private var samples: [MetricSample]
-    @Query private var events: [EventRecord]
+    @State private var history = ContainerHistorySnapshot()
 
     init(snapshot: Core.Container.Snapshot, cutoff: Date, normalization: Core.Metrics.NormalizationContext) {
         self.snapshot = snapshot
+        self.cutoff = cutoff
         self.normalization = normalization
-        let containerID = snapshot.id
-        _samples = Query(filter: #Predicate { $0.containerID == containerID && $0.timestamp >= cutoff },
-                         sort: \MetricSample.timestamp)
-        _events = Query(filter: #Predicate { $0.containerID == containerID && $0.timestamp >= cutoff },
-                        sort: \EventRecord.timestamp, order: .reverse)
     }
 
     var body: some View {
-        let chartPoints = HistoryChartPoint.points(from: samples.map(MetricSampleSnapshot.init),
+        let chartPoints = HistoryChartPoint.points(from: history.metrics,
                                                    snapshot: snapshot,
                                                    normalization: normalization)
 
@@ -112,15 +107,34 @@ private struct ContainerHistoryWindow: View {
                 }
             }
 
-            if !events.isEmpty {
+            if !history.events.isEmpty {
                 UI.List.Stack(padding: 0) {
                     Text(AppText.string("history.events", defaultValue: "Events")).designHeadlineLabelStyle()
-                    ForEach(events.prefix(50)) { event in
-                        EventRow(event: event)
+                    ForEach(history.events) { event in
+                        EventRow(event: event,
+                                 onReadChange: { updateRead(event.id, isRead: $0) },
+                                 onDelete: { deleteEvent(event.id) })
                     }
                 }
             }
         }
+        .task(id: HistoryLoadKey(containerID: snapshot.id, cutoff: cutoff)) {
+            let loaded = await app.historyStore.containerHistory(containerID: snapshot.id, since: cutoff)
+            guard !Task.isCancelled else { return }
+            history = loaded
+        }
+    }
+
+    private func updateRead(_ id: PersistentIdentifier, isRead: Bool) {
+        app.historyStore.setEventRead(id, isRead: isRead)
+        if let index = history.events.firstIndex(where: { $0.id == id }) {
+            history.events[index].isRead = isRead
+        }
+    }
+
+    private func deleteEvent(_ id: PersistentIdentifier) {
+        app.historyStore.deleteEvent(id)
+        history.events.removeAll { $0.id == id }
     }
 
     private func chartCard<C: View>(_ title: String, unit: String, @ViewBuilder chart: @escaping () -> C) -> some View {
@@ -145,7 +159,13 @@ private struct ContainerHistoryWindow: View {
     }
 }
 
+private struct HistoryLoadKey: Hashable {
+    let containerID: String
+    let cutoff: Date
+}
+
 struct HistoryChartPoint: Identifiable, Equatable {
+    static let maximumRenderedPoints = 600
     let id: Int
     let timestamp: Date
     let cpuPercent: Double
@@ -164,7 +184,7 @@ struct HistoryChartPoint: Identifiable, Equatable {
         let cpuLimit = normalization.cpuLimit(for: snapshot)
         let memoryLimit = normalization.memoryLimitBytes(for: snapshot, fallback: memoryFallbackBytes)
 
-        return samples.enumerated().map { index, sample in
+        return downsample(samples).enumerated().map { index, sample in
             let cpu = sanitized(sample.cpuFraction) / cpuLimit
             let memory = memoryLimit > 0 ? sanitized(sample.memoryBytes) / Double(memoryLimit) : 0
             return HistoryChartPoint(id: index,
@@ -173,6 +193,31 @@ struct HistoryChartPoint: Identifiable, Equatable {
                                      memoryPercent: percent(memory),
                                      netRxKBPerSec: sanitized(sample.netRxBytesPerSec) / 1024,
                                      netTxKBPerSec: sanitized(sample.netTxBytesPerSec) / 1024)
+        }
+    }
+
+    /// Charts become needlessly expensive when a week of one-minute samples produces ten thousand
+    /// marks. Aggregate adjacent samples to a bounded, time-ordered series before creating marks;
+    /// the full-resolution history remains in SwiftData for future ranges and exports.
+    static func downsample(_ samples: [MetricSampleSnapshot],
+                           maximumPoints: Int = maximumRenderedPoints) -> [MetricSampleSnapshot] {
+        guard maximumPoints > 0, samples.count > maximumPoints else { return samples }
+        let bucketSize = Double(samples.count) / Double(maximumPoints)
+        return (0..<maximumPoints).compactMap { bucket in
+            let lower = Int((Double(bucket) * bucketSize).rounded(.down))
+            let upper = min(Int((Double(bucket + 1) * bucketSize).rounded(.down)), samples.count)
+            guard lower < upper else { return nil }
+            let window = samples[lower..<upper]
+            let count = Double(window.count)
+            let timestamp = window.reduce(0.0) { $0 + $1.timestamp.timeIntervalSinceReferenceDate } / count
+            return MetricSampleSnapshot(timestamp: Date(timeIntervalSinceReferenceDate: timestamp),
+                                        containerID: window.first!.containerID,
+                                        cpuFraction: window.reduce(0) { $0 + $1.cpuFraction } / count,
+                                        memoryBytes: window.reduce(0) { $0 + $1.memoryBytes } / count,
+                                        netRxBytesPerSec: window.reduce(0) { $0 + $1.netRxBytesPerSec } / count,
+                                        netTxBytesPerSec: window.reduce(0) { $0 + $1.netTxBytesPerSec } / count,
+                                        diskReadBytesPerSec: window.reduce(0) { $0 + $1.diskReadBytesPerSec } / count,
+                                        diskWriteBytesPerSec: window.reduce(0) { $0 + $1.diskWriteBytesPerSec } / count)
         }
     }
 
@@ -208,12 +253,13 @@ private extension View {
 
 /// One row in an event log (used by the history tab and the system Activity view).
 struct EventRow: View {
-    let event: EventRecord
+    let event: ActivityEvent
     var elevated = true
     /// When true, the row is highlighted (accent wash + dot) to mark an event the user hasn't seen yet.
     /// The Activity panel passes this; the per-container history tab leaves it false.
     var isUnread = false
-    @Environment(\.modelContext) private var modelContext
+    var onReadChange: (Bool) -> Void = { _ in }
+    var onDelete: () -> Void = {}
 
     var body: some View {
         UI.Card.Scaffold(size: .small,
@@ -258,22 +304,14 @@ struct EventRow: View {
     @ViewBuilder
     private var rowMenu: some View {
         if event.isRead {
-            Button { event.isRead = false; save() } label: { Label("Mark as Unread", systemImage: "circle") }
+            Button { onReadChange(false) } label: { Label("Mark as Unread", systemImage: "circle") }
         } else {
-            Button { event.isRead = true; save() } label: { Label("Mark as Read", systemImage: "checkmark.circle") }
+            Button { onReadChange(true) } label: { Label("Mark as Read", systemImage: "checkmark.circle") }
         }
         UI.Copy.ValueLabel("Copy Message", value: event.message)
         Divider()
-        Button(role: .destructive) { modelContext.delete(event); save() } label: {
+        Button(role: .destructive) { onDelete() } label: {
             Label("Delete Event", systemImage: "trash")
-        }
-    }
-
-    private func save() {
-        do {
-            try modelContext.save()
-        } catch {
-            fatalError("Failed to save activity event: \(error)")
         }
     }
 }
