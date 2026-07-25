@@ -1,4 +1,0 @@
-- Optional Startup settings to start a stopped container engine when Contained opens and to restore stopped containers marked Always after Contained starts that engine.
-- Fixed container-grid cards and their detail transition overlapping when a container appears in multiple groups or runtimes.
-- Fixed per-container History charts loading no data for runtime-scoped containers.
-- Container history now keeps low-overhead, five-minute snapshots while Contained is running but its Containers view is hidden or inactive; charts mark long collection gaps instead of implying uninterrupted data.
