@@ -2,4 +2,4 @@
 - Fixed container-grid cards and their detail transition overlapping when a container appears in multiple groups or runtimes.
 - Fixed per-container History charts loading no data for runtime-scoped containers.
 - Container history now keeps low-overhead, five-minute snapshots while Contained is running but its Containers view is hidden or inactive; charts mark long collection gaps instead of implying uninterrupted data.
-- Stabilized the container grid so live metric updates no longer reflow card widths between rows.
+- Stabilized the container grid so live metric updates no longer reflow card widths between rows, and tightened its responsive size so three columns fit in a narrower window.

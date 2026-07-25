@@ -62,8 +62,9 @@ enum Tokens {
         // rather than capping them tightly and leaving trailing dead space on wide windows.
         public static let compactMin: CGFloat = 230
         public static let compactMax: CGFloat = 400
-        public static let largeMin: CGFloat = 300
+        public static let largeMin: CGFloat = 280
         public static let largeMax: CGFloat = 520
+        public static let largePreferred: CGFloat = 360
     }
 
     /// Canonical sheet dimensions — expose through `UI.Panel.SheetSize` for app and UX use. Replaces ad-hoc
@@ -322,8 +323,7 @@ public extension UI.Card {
         public static let compactMax = UI.Tokens.CardSize.compactMax
         public static let largeMin = UI.Tokens.CardSize.largeMin
         public static let largeMax = UI.Tokens.CardSize.largeMax
-
-        public static var largePreferred: CGFloat { (largeMin + largeMax) / 2 }
+        public static let largePreferred = UI.Tokens.CardSize.largePreferred
 
         public static func stableColumns(availableWidth: CGFloat,
                                          spacing: CGFloat) -> [GridItem] {

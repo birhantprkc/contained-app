@@ -6,7 +6,8 @@ import ContainedUI
 @Suite("Container grid projection")
 struct ContainerGridProjectionTests {
     @Test func stableColumnsDependOnlyOnViewportWidth() {
-        #expect(UI.Card.Grid.stableColumns(availableWidth: 1_600, spacing: 16).count == 3)
+        #expect(UI.Card.Grid.stableColumns(availableWidth: 1_600, spacing: 16).count == 4)
+        #expect(UI.Card.Grid.stableColumns(availableWidth: 1_200, spacing: 16).count == 3)
         #expect(UI.Card.Grid.stableColumns(availableWidth: 1_000, spacing: 16).count == 2)
         #expect(UI.Card.Grid.stableColumns(availableWidth: 600, spacing: 16).count == 1)
     }
