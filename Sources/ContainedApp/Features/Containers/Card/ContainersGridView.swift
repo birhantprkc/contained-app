@@ -55,15 +55,14 @@ struct ContainersGridView: View {
                                    search: ui.search.text)
     }
 
-    private var columns: [GridItem] {
-        return [GridItem(.adaptive(minimum: UI.Card.Grid.largeMin, maximum: UI.Card.Grid.largeMax),
-                  spacing: UI.Layout.Spacing.m)]
-    }
-
     var body: some View {
         @Bindable var ui = ui
         return GeometryReader { viewport in
             let scrollBounds = safeAreaManager.bounds(in: viewport.size, policy: .content)
+            let gridColumns = UI.Card.Grid.stableColumns(
+                availableWidth: viewport.size.width - (UI.Layout.Spacing.l * 2),
+                spacing: UI.Layout.Spacing.m
+            )
             ZStack {
                 ScrollView {
                     ZStack(alignment: .top) {
@@ -76,12 +75,13 @@ struct ContainersGridView: View {
                             .onTapGesture(count: 2) { zoomFrontWindow() }
                         LazyVStack(alignment: .leading, spacing: UI.Layout.Spacing.l) {
                             ForEach(projectionState.projection.groups) { group in
-                                groupSection(group)
+                                groupSection(group, columns: gridColumns)
                             }
                             Color.clear
                                 .frame(height: UI.Toolbar.Size.band)
                         }
                         .padding(.horizontal, UI.Layout.Spacing.l)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 .contentMargins(.top, ui.toolbarUIEnabled ? 0 : UI.Toolbar.Size.band, for: .scrollContent)
@@ -154,7 +154,8 @@ struct ContainersGridView: View {
     // MARK: - Network sections
 
     @ViewBuilder
-    private func groupSection(_ group: ContainerGridProjection.Group) -> some View {
+    private func groupSection(_ group: ContainerGridProjection.Group,
+                              columns: [GridItem]) -> some View {
         let collapsed = collapsedNetworks.contains(group.name)
         LazyVStack(alignment: .leading, spacing: UI.Layout.Spacing.s) {
             sectionHeader(group, collapsed: collapsed)

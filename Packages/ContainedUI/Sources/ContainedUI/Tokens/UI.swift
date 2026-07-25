@@ -314,12 +314,25 @@ public extension UI.Card {
         public static let selectedPersonalizedFillOpacity = UI.Tokens.Card.selectedPersonalizedFillOpacity
     }
 
-    /// Card grid sizing mirrors adaptive grid defaults for repeated card collections.
+    /// Card grid sizing for repeated card collections. Use `stableColumns` for live-updating
+    /// cards: it derives a fixed column count from the viewport alone, preventing transient child
+    /// measurements (for example a changing metric label) from reflowing a grid row.
     enum Grid {
         public static let compactMin = UI.Tokens.CardSize.compactMin
         public static let compactMax = UI.Tokens.CardSize.compactMax
         public static let largeMin = UI.Tokens.CardSize.largeMin
         public static let largeMax = UI.Tokens.CardSize.largeMax
+
+        public static var largePreferred: CGFloat { (largeMin + largeMax) / 2 }
+
+        public static func stableColumns(availableWidth: CGFloat,
+                                         spacing: CGFloat) -> [GridItem] {
+            let usableWidth = max(availableWidth, 1)
+            let count = max(1, Int(((usableWidth + spacing) / (largePreferred + spacing)).rounded(.down)))
+            return Array(repeating: GridItem(.flexible(minimum: largeMin, maximum: .infinity),
+                                             spacing: spacing),
+                         count: count)
+        }
     }
 }
 
