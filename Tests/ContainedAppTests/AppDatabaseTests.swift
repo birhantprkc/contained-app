@@ -22,6 +22,26 @@ struct AppDatabaseTests {
         #expect(reloaded.accentTint == .teal)
     }
 
+    @Test func engineStartupSettingsDefaultOffPersistAndRoundTripThroughBackup() {
+        let database = AppDatabase(isStoredInMemoryOnly: true)
+        let settings = SettingsStore(database: database)
+
+        #expect(!settings.autoStartEngineOnLaunch)
+        #expect(!settings.autoStartAlwaysContainers)
+
+        settings.autoStartEngineOnLaunch = true
+        settings.autoStartAlwaysContainers = true
+        let reloaded = SettingsStore(database: database)
+        #expect(reloaded.autoStartEngineOnLaunch)
+        #expect(reloaded.autoStartAlwaysContainers)
+
+        let backup = settings.backupSnapshot()
+        let restored = SettingsStore(database: AppDatabase(isStoredInMemoryOnly: true))
+        restored.applyBackup(backup)
+        #expect(restored.autoStartEngineOnLaunch)
+        #expect(restored.autoStartAlwaysContainers)
+    }
+
     @Test func runtimePathOverridesAreRuntimeScopedRecords() {
         let database = AppDatabase(isStoredInMemoryOnly: true)
         let settings = SettingsStore(database: database)
@@ -78,6 +98,8 @@ struct AppDatabaseTests {
         let decoded = try JSONDecoder().decode(SettingsBackup.self, from: Data(legacyJSON.utf8))
         #expect(decoded.runtimePathOverrides[Core.Runtime.Kind.appleContainer.rawValue] == "/legacy/container")
         #expect(decoded.runtimePathOverrides[Core.Runtime.Kind.docker.rawValue] == "/legacy/docker")
+        #expect(!decoded.autoStartEngineOnLaunch)
+        #expect(!decoded.autoStartAlwaysContainers)
     }
 
     @Test func containerRefreshUpsertsRuntimeScopedRecords() async throws {

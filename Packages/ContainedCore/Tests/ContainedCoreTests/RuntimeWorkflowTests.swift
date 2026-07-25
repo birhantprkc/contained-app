@@ -205,6 +205,25 @@ struct RuntimeWorkflowTests {
         #expect(Core.Container.RestartDecision.shouldRestart(policy: .onFailure, userInitiated: false, exitCode: 137))
     }
 
+    @Test func engineStartRestoreDecisionOnlySelectsStoppedAlwaysContainers() {
+        #expect(Core.Container.RestartDecision.shouldRestoreAfterEngineStart(policy: .always, state: .stopped))
+        #expect(!Core.Container.RestartDecision.shouldRestoreAfterEngineStart(policy: .always, state: .running))
+        #expect(!Core.Container.RestartDecision.shouldRestoreAfterEngineStart(policy: .onFailure, state: .stopped))
+        #expect(!Core.Container.RestartDecision.shouldRestoreAfterEngineStart(policy: .no, state: .stopped))
+    }
+
+    @Test func restoreAlwaysContainersContinuesAfterPerContainerFailure() async throws {
+        let runner = StartupRestoreRunner()
+        let orchestrator = Core.Orchestrator.testing(runner: runner, runtimeKind: .appleContainer)
+
+        let result = try await orchestrator.restoreAlwaysContainers(runtimeKind: .appleContainer)
+
+        #expect(result.startedContainerIDs == ["alpha", "zeta"])
+        #expect(result.failures.map(\.containerID) == ["broken"])
+        #expect(result.failures.first?.runtimeKind == .appleContainer)
+        #expect(await runner.startCalls() == ["alpha", "broken", "zeta"])
+    }
+
     @Test func watchdogBackoffGrowsAndCaps() {
         #expect(Core.Container.RestartDecision.backoff(attempt: 0) == 0)
         #expect(Core.Container.RestartDecision.backoff(attempt: 1) == 2)
@@ -212,4 +231,38 @@ struct RuntimeWorkflowTests {
         #expect(Core.Container.RestartDecision.backoff(attempt: 3) == 8)
         #expect(Core.Container.RestartDecision.backoff(attempt: 10) == 60)   // capped
     }
+}
+
+private actor StartupRestoreRunner: Core.Command.Running {
+    private var calls: [[String]] = []
+
+    func run(_ arguments: [String],
+             stdin: Data?,
+             priority: Core.Command.ExecutionPriority) async throws -> Data {
+        calls.append(arguments)
+        if arguments == ContainerCommands.list(all: true) { return Self.inventory }
+        if arguments == ["start", "broken"] {
+            throw Core.Command.Error.nonZeroExit(code: 1, stderr: "fixture start failure", command: "start broken")
+        }
+        return Data()
+    }
+
+    nonisolated func stream(_ arguments: [String],
+                            priority: Core.Command.ExecutionPriority) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in continuation.finish() }
+    }
+
+    func startCalls() -> [String] {
+        calls.compactMap { call in call.first == "start" ? call.last : nil }
+    }
+
+    private static let inventory = Data("""
+    [
+      {"configuration":{"id":"zeta","image":{"reference":"example/zeta"},"initProcess":{},"labels":{"contained.restart":"always"}},"id":"zeta","status":{"state":"stopped"}},
+      {"configuration":{"id":"on-failure","image":{"reference":"example/on-failure"},"initProcess":{},"labels":{"contained.restart":"on-failure"}},"id":"on-failure","status":{"state":"stopped"}},
+      {"configuration":{"id":"running","image":{"reference":"example/running"},"initProcess":{},"labels":{"contained.restart":"always"}},"id":"running","status":{"state":"running"}},
+      {"configuration":{"id":"broken","image":{"reference":"example/broken"},"initProcess":{},"labels":{"contained.restart":"always"}},"id":"broken","status":{"state":"stopped"}},
+      {"configuration":{"id":"alpha","image":{"reference":"example/alpha"},"initProcess":{},"labels":{"contained.restart":"always"}},"id":"alpha","status":{"state":"stopped"}}
+    ]
+    """.utf8)
 }

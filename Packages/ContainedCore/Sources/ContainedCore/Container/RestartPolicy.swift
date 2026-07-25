@@ -17,6 +17,14 @@ enum RestartPolicy: String, CaseIterable, Identifiable, Codable, Sendable {
 /// without a live daemon. The watchdog calls this for every container that transitions
 /// `running → stopped` on a refresh tick.
 enum RestartDecision {
+    /// Whether a stopped container should be restored after Contained itself starts its runtime.
+    /// Unlike a live crash, an engine startup has no container exit status, so only the explicit
+    /// `always` policy participates. `on-failure` remains a live watchdog policy.
+    public static func shouldRestoreAfterEngineStart(policy: Core.Container.RestartPolicy,
+                                                     state: Core.Runtime.Status) -> Bool {
+        policy == .always && state == .stopped
+    }
+
     /// Should the watchdog restart a container that just stopped?
     ///
     /// - Parameters:

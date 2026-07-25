@@ -41,6 +41,9 @@ final class AppModel {
     @ObservationIgnored private var containerStatsStreamIDs: [String] = []
     @ObservationIgnored private var containerStatsStreamGeneration = 0
     @ObservationIgnored private var lastRecordedStatsRevision = 0
+    @ObservationIgnored private var bootstrapTask: Task<Void, Never>?
+    @ObservationIgnored private var didCompleteInitialBootstrap = false
+    @ObservationIgnored private var didAttemptLaunchEngineStart = false
     @ObservationIgnored var migrationStabilizationTimeout: TimeInterval = 120
     @ObservationIgnored var migrationPollInterval: TimeInterval = 2
     @ObservationIgnored let diagnosticLogger = Logger(subsystem: "app.contained.Contained", category: "diagnostic")
@@ -233,6 +236,26 @@ final class AppModel {
     }
 
     func bootstrapIfNeeded() async {
+        await bootstrap(force: false)
+    }
+
+    private func bootstrap(force: Bool) async {
+        guard force || !didCompleteInitialBootstrap else { return }
+        if let bootstrapTask {
+            await bootstrapTask.value
+            return
+        }
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.performBootstrap()
+        }
+        bootstrapTask = task
+        await task.value
+        bootstrapTask = nil
+        didCompleteInitialBootstrap = true
+    }
+
+    private func performBootstrap() async {
         logger.record("Checking container runtime CLI", category: .system, severity: .debug)
         let configuration = Core.Configuration(runtimes: Dictionary(uniqueKeysWithValues: supportedRuntimeDescriptors.map { descriptor in
             (descriptor.kind, Core.Runtime.Configuration(cliPathOverride: settings.runtimePathOverride(for: descriptor.kind)))
@@ -260,13 +283,31 @@ final class AppModel {
             }
         }
 
+        if await startEngineOnLaunchIfNeeded() { return }
         await refreshSystem()
+    }
+
+    /// Performs the one launch-time engine-start attempt. Kept separate from bootstrap so the
+    /// lifecycle rule remains directly testable without locating a real CLI.
+    @discardableResult
+    func startEngineOnLaunchIfNeeded() async -> Bool {
+        guard shouldStartEngineOnLaunch, let kind = serviceControlRuntimeKind else { return false }
+        didAttemptLaunchEngineStart = true
+        return await runServiceLifecycle([.start], runtimeKind: kind)
+    }
+
+    private var shouldStartEngineOnLaunch: Bool {
+        guard settings.autoStartEngineOnLaunch,
+              !didAttemptLaunchEngineStart,
+              serviceControlRuntimeAvailable,
+              let kind = serviceControlRuntimeKind else { return false }
+        return runtimeReadiness[kind]?.state == .endpointUnavailable
     }
 
     /// Re-run CLI/service detection (onboarding "Try again").
     func retryBootstrap() async {
         bootstrap = .checking
-        await bootstrapIfNeeded()
+        await bootstrap(force: true)
     }
 
     /// Point at a specific `container` binary (onboarding "Locate…") and re-detect.
@@ -1044,39 +1085,85 @@ final class AppModel {
         }
     }
 
-    /// Start the container system service, then re-bootstrap.
+    /// Start the container system service and optionally restore Always-policy containers.
     func startService() async {
-        await runServiceLifecycle([.start], resetWatchdog: false)
-        logger.record("Started container service", category: .system)
+        if await runServiceLifecycle([.start]) {
+            logger.record("Started container service", category: .system)
+        }
     }
 
     /// Stop the container system service, then re-bootstrap.
     func stopService() async {
-        await runServiceLifecycle([.stop], resetWatchdog: true)
-        logger.record("Stopped container service", category: .system, severity: .warning)
+        if await runServiceLifecycle([.stop]) {
+            logger.record("Stopped container service", category: .system, severity: .warning)
+        }
     }
 
-    /// Stop then start the container system service, then re-bootstrap.
+    /// Stop then start the container system service, optionally restoring Always-policy containers.
     func restartService() async {
-        await runServiceLifecycle([.stop, .start], resetWatchdog: true)
-        logger.record("Restarted container service", category: .system, severity: .warning)
+        if await runServiceLifecycle([.stop, .start]) {
+            logger.record("Restarted container service", category: .system, severity: .warning)
+        }
     }
 
-    /// Shared driver for service lifecycle commands. Marks the app `.checking` for immediate UI
-    /// feedback, optionally resets the restart watchdog, runs each typed runtime action in order,
-    /// then re-reads service status. Failures are intentionally ignored because `refreshSystem`
-    /// reports the resulting state regardless.
-    private func runServiceLifecycle(_ actions: [Core.Runtime.SystemAction], resetWatchdog: Bool) async {
-        guard let kind = serviceControlRuntimeKind, serviceControlRuntimeAvailable else {
+    /// Shared driver for Contained-initiated service controls. Starts always reset the watchdog so
+    /// a post-engine-start inventory cannot be mistaken for a live crash transition.
+    @discardableResult
+    private func runServiceLifecycle(_ actions: [Core.Runtime.SystemAction],
+                                     runtimeKind requestedKind: Core.Runtime.Kind? = nil) async -> Bool {
+        guard let kind = requestedKind ?? serviceControlRuntimeKind, serviceControlRuntimeAvailable else {
             flash(AppText.string("runtime.service.unavailable",
                                  defaultValue: "Service controls are not available for the current runtime. Start the runtime provider externally, then retry."))
-            return
+            return false
         }
-        guard let client else { return }
+        guard let client else { return false }
         bootstrap = .checking
-        if resetWatchdog { watchdog.reset() }
-        for action in actions { _ = try? await client.performSystemAction(action, runtimeKind: kind) }
+        if actions.contains(.start) || actions.contains(.stop) { watchdog.reset() }
+        for action in actions {
+            do {
+                _ = try await client.performSystemAction(action, runtimeKind: kind)
+            } catch {
+                logger.recordFailure("Couldn't \(action.rawValue) container service",
+                                     error: error,
+                                     category: .system)
+                flash(error.appDisplayMessage)
+                await refreshSystem()
+                return false
+            }
+        }
         await refreshSystem()
+        guard !actions.contains(.start) || runtimeIsReady(kind) else { return false }
+        guard actions.contains(.start), settings.autoStartAlwaysContainers else { return true }
+        await restoreAlwaysContainers(afterStarting: kind, client: client)
+        await refreshSystem()
+        return true
+    }
+
+    private func restoreAlwaysContainers(afterStarting runtimeKind: Core.Runtime.Kind,
+                                         client: Core.Orchestrator) async {
+        do {
+            let result = try await client.restoreAlwaysContainers(runtimeKind: runtimeKind)
+            for id in result.startedContainerIDs {
+                logger.record("Started Always-policy container after engine start",
+                              category: .lifecycle,
+                              containerID: runtimeKind.scopedID(for: id))
+            }
+            for failure in result.failures {
+                logger.record("Couldn't start Always-policy container after engine start: \(failure.runtimeDetail)",
+                              category: .lifecycle,
+                              severity: .error,
+                              containerID: failure.id)
+            }
+            guard !result.failures.isEmpty else { return }
+            flash(AppText.string("engineStartup.containerRestorePartialFailure",
+                                 defaultValue: "Started \(result.startedContainerIDs.count) Always container(s); \(result.failures.count) couldn't be started."))
+        } catch {
+            logger.recordFailure("Couldn't restore Always-policy containers after engine start",
+                                 error: error,
+                                 category: .lifecycle)
+            flash(AppText.string("engineStartup.containerRestoreFailed",
+                                 defaultValue: "The engine started, but Contained couldn't restore its Always containers: \(error.appDisplayMessage)"))
+        }
     }
 
     /// Short health label for the toolbar indicator.

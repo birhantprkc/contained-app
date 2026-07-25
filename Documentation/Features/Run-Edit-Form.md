@@ -85,7 +85,7 @@ in that section has non-default content.
 | Limit parallel downloads toggle + stepper | `--max-concurrent-downloads <n>` | Empty means runtime default. |
 | Storage group | `--volume <source>:<target>` | Each group can contain multiple host-folder paths. Turning on runtime-volume backing mounts one volume and links the group paths inside it. |
 | Disable DNS toggle | `--no-dns` | When enabled, DNS-specific rows are hidden and the command omits `--dns*` flags so the UI cannot express contradictory settings. |
-| Restart policy picker | `--label contained.restart=<policy>` | `container` has no native restart flag. Contained stores restart intent as a label and the app watchdog enforces it. |
+| Restart policy picker | `--label contained.restart=<policy>` | `container` has no native restart flag. Contained stores restart intent as a label. The app watchdog enforces live crash recovery, and `Always` can also restore a stopped container after Contained starts the engine when enabled in Startup settings. |
 | Health check section | local app state | `container` has no native healthcheck flag. Contained stores and runs probes itself. |
 | Personalization section | local app state | Nickname, icon, tint, and card background are local-only and are not written as container labels. |
 

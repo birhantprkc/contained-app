@@ -14,6 +14,12 @@ struct GeneralTab: View {
             Section(AppText.string("settings.general.startup", defaultValue: "Startup")) {
                 UI.Form.ToggleRow(title: AppText.string("settings.general.launchAtLogin", defaultValue: "Launch at login"),
                                   isOn: $settings.launchAtLogin)
+                UI.Form.ToggleRow(title: AppText.string("settings.general.autoStartEngineOnLaunch", defaultValue: "Start engine when Contained opens"),
+                                  info: AppText.string("settings.general.autoStartEngineOnLaunch.info", defaultValue: "Starts a controllable container engine only when it is stopped. Enable Launch at login separately for automatic recovery after restarting your Mac."),
+                                  isOn: $settings.autoStartEngineOnLaunch)
+                UI.Form.ToggleRow(title: AppText.string("settings.general.autoStartAlwaysContainers", defaultValue: "Start Always containers when engine starts"),
+                                  info: AppText.string("settings.general.autoStartAlwaysContainers.info", defaultValue: "After Contained starts an engine, starts its stopped containers whose restart policy is Always. This also applies to Start Service and Restart Service."),
+                                  isOn: $settings.autoStartAlwaysContainers)
                 UI.Form.ToggleRow(title: AppText.string("settings.general.keepInMenuBar", defaultValue: "Keep running in the menu bar"),
                                   isChanged: settings.keepInMenuBar != true,
                                   isOn: $settings.keepInMenuBar)

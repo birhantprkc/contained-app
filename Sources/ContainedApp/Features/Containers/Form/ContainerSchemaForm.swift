@@ -507,7 +507,7 @@ struct ContainerSchemaForm: View {
     private var restartSection: some View {
         formRow(title: AppText.string("runSpec.restartPolicy", defaultValue: "Restart policy"),
                 path: .lifecycleRestartPolicy,
-                info: AppText.string("containerForm.restartPolicy.info", defaultValue: "Contained restarts the container automatically based on this setting.")) {
+                info: AppText.string("containerForm.restartPolicy.info", defaultValue: "Contained restarts the container automatically based on this setting. With Always, it can also start the container after Contained starts the engine when that Startup setting is enabled.")) {
             Picker("", selection: $spec.restart) {
                 ForEach(Core.Container.RestartPolicy.allCases) { Text($0.localizedDisplayName).tag($0) }
             }

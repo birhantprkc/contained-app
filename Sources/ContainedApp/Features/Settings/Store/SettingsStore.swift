@@ -39,6 +39,10 @@ final class SettingsStore {
     /// Automation toggles (surfaced in System → Automation). Each gates a background task.
     var imageUpdateChecksEnabled: Bool { didSet { persist(imageUpdateChecksEnabled, for: Keys.imageUpdateChecksEnabled) } }
     var appUpdateChecksEnabled: Bool { didSet { persist(appUpdateChecksEnabled, for: Keys.appUpdateChecksEnabled) } }
+    /// Start a controllable, stopped runtime once when Contained opens.
+    var autoStartEngineOnLaunch: Bool { didSet { persist(autoStartEngineOnLaunch, for: Keys.autoStartEngineOnLaunch) } }
+    /// Restore stopped containers marked `contained.restart=always` after Contained starts a runtime.
+    var autoStartAlwaysContainers: Bool { didSet { persist(autoStartAlwaysContainers, for: Keys.autoStartAlwaysContainers) } }
     var autoRestartEnabled: Bool { didSet { persist(autoRestartEnabled, for: Keys.autoRestartEnabled) } }
     var notifyOnCrash: Bool { didSet { persist(notifyOnCrash, for: Keys.notifyOnCrash) } }
     /// Show "Reveal CLI" affordances on destructive/privileged actions (global gate).
@@ -129,6 +133,8 @@ final class SettingsStore {
         imageUpdateIntervalHours = database.setting(Keys.imageUpdateIntervalHours, fallback: 6)
         imageUpdateChecksEnabled = database.setting(Keys.imageUpdateChecksEnabled, fallback: true)
         appUpdateChecksEnabled = database.setting(Keys.appUpdateChecksEnabled, fallback: true)
+        autoStartEngineOnLaunch = database.setting(Keys.autoStartEngineOnLaunch, fallback: false)
+        autoStartAlwaysContainers = database.setting(Keys.autoStartAlwaysContainers, fallback: false)
         autoRestartEnabled = database.setting(Keys.autoRestartEnabled, fallback: true)
         notifyOnCrash = database.setting(Keys.notifyOnCrash, fallback: true)
         revealCLI = database.setting(Keys.revealCLI, fallback: true)
@@ -180,6 +186,8 @@ final class SettingsStore {
                        imageUpdateIntervalHours: imageUpdateIntervalHours,
                        imageUpdateChecksEnabled: imageUpdateChecksEnabled,
                        appUpdateChecksEnabled: appUpdateChecksEnabled,
+                       autoStartEngineOnLaunch: autoStartEngineOnLaunch,
+                       autoStartAlwaysContainers: autoStartAlwaysContainers,
                        autoRestartEnabled: autoRestartEnabled,
                        notifyOnCrash: notifyOnCrash,
                        revealCLI: revealCLI,
@@ -223,6 +231,8 @@ final class SettingsStore {
         imageUpdateIntervalHours = snapshot.imageUpdateIntervalHours
         imageUpdateChecksEnabled = snapshot.imageUpdateChecksEnabled
         appUpdateChecksEnabled = snapshot.appUpdateChecksEnabled
+        autoStartEngineOnLaunch = snapshot.autoStartEngineOnLaunch
+        autoStartAlwaysContainers = snapshot.autoStartAlwaysContainers
         autoRestartEnabled = snapshot.autoRestartEnabled
         notifyOnCrash = snapshot.notifyOnCrash
         revealCLI = snapshot.revealCLI
@@ -288,6 +298,8 @@ final class SettingsStore {
         static let imageUpdateIntervalHours = "imageUpdateIntervalHours"
         static let imageUpdateChecksEnabled = "imageUpdateChecksEnabled"
         static let appUpdateChecksEnabled = "appUpdateChecksEnabled"
+        static let autoStartEngineOnLaunch = "autoStartEngineOnLaunch"
+        static let autoStartAlwaysContainers = "autoStartAlwaysContainers"
         static let autoRestartEnabled = "autoRestartEnabled"
         static let notifyOnCrash = "notifyOnCrash"
         static let revealCLI = "revealCLI"

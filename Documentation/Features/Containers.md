@@ -51,6 +51,13 @@ Apple `container` has no native restart policy or healthcheck. Contained stores
 restart intent and health probes as app-managed state, runs probes through the
 container's owning runtime, and records events in Activity/History.
 
+In **Settings → General → Startup**, you can independently opt in to starting a
+stopped controllable engine when Contained opens and to restoring stopped
+containers marked **Always** after Contained starts that engine. The latter also
+applies to Contained's Start Service and Restart Service actions. It does not
+run when an already-running engine is merely detected, and **On failure** stays
+reserved for live crash recovery.
+
 ## Edit
 
 Container edit opens the same [Run / Edit Form](/Documentation/Features/Run-Edit-Form.md) used for new

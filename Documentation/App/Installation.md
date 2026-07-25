@@ -12,6 +12,11 @@ Download the latest `Contained.dmg` from [Releases](https://github.com/tdeverx/c
 
 On first launch, the bootstrap screen checks for the `container` CLI and the runtime service, and helps you start it.
 
+For reboot recovery, enable **Launch at login** and, separately, **Start engine
+when Contained opens** in **Settings → General → Startup**. You can also choose
+to start stopped containers marked **Always** whenever Contained starts the
+engine.
+
 > If the CLI isn't found, set its path in **Settings → Runtime**, or install it from the [container releases](https://github.com/apple/container).
 
 ## Build from source

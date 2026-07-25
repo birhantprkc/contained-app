@@ -26,6 +26,8 @@ struct SettingsBackup: Codable, Equatable {
     var imageUpdateIntervalHours: Int
     var imageUpdateChecksEnabled: Bool
     var appUpdateChecksEnabled: Bool
+    var autoStartEngineOnLaunch: Bool
+    var autoStartAlwaysContainers: Bool
     var autoRestartEnabled: Bool
     var notifyOnCrash: Bool
     var revealCLI: Bool
@@ -50,7 +52,8 @@ struct SettingsBackup: Codable, Equatable {
         case cardMaterial
         case showInfoTips, imageDefaultStyleEnabled, keepInMenuBar, runtimePathOverrides
         case cliPathOverride, dockerCLIPathOverride, refreshInterval
-        case statsNormalizationMode, imageUpdateIntervalHours, imageUpdateChecksEnabled, appUpdateChecksEnabled, autoRestartEnabled
+        case statsNormalizationMode, imageUpdateIntervalHours, imageUpdateChecksEnabled, appUpdateChecksEnabled
+        case autoStartEngineOnLaunch, autoStartAlwaysContainers, autoRestartEnabled
         case notifyOnCrash, revealCLI, historyRetentionDays, loggingLevel, enabledLogDestinations
         case enabledLogCategories, updateChannel, commandPaletteEnabled, hubSearchEnabled
         case composeImportEnabled, imageBuildEnabled, keyboardShortcutsEnabled, experimentalToolbarUI
@@ -79,6 +82,8 @@ struct SettingsBackup: Codable, Equatable {
          imageUpdateIntervalHours: Int,
          imageUpdateChecksEnabled: Bool,
          appUpdateChecksEnabled: Bool,
+         autoStartEngineOnLaunch: Bool = false,
+         autoStartAlwaysContainers: Bool = false,
          autoRestartEnabled: Bool,
          notifyOnCrash: Bool,
          revealCLI: Bool,
@@ -117,6 +122,8 @@ struct SettingsBackup: Codable, Equatable {
         self.imageUpdateIntervalHours = imageUpdateIntervalHours
         self.imageUpdateChecksEnabled = imageUpdateChecksEnabled
         self.appUpdateChecksEnabled = appUpdateChecksEnabled
+        self.autoStartEngineOnLaunch = autoStartEngineOnLaunch
+        self.autoStartAlwaysContainers = autoStartAlwaysContainers
         self.autoRestartEnabled = autoRestartEnabled
         self.notifyOnCrash = notifyOnCrash
         self.revealCLI = revealCLI
@@ -167,6 +174,8 @@ struct SettingsBackup: Codable, Equatable {
         imageUpdateIntervalHours = try container.decodeIfPresent(Int.self, forKey: .imageUpdateIntervalHours) ?? 6
         imageUpdateChecksEnabled = try container.decodeIfPresent(Bool.self, forKey: .imageUpdateChecksEnabled) ?? true
         appUpdateChecksEnabled = try container.decodeIfPresent(Bool.self, forKey: .appUpdateChecksEnabled) ?? true
+        autoStartEngineOnLaunch = try container.decodeIfPresent(Bool.self, forKey: .autoStartEngineOnLaunch) ?? false
+        autoStartAlwaysContainers = try container.decodeIfPresent(Bool.self, forKey: .autoStartAlwaysContainers) ?? false
         autoRestartEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoRestartEnabled) ?? true
         notifyOnCrash = try container.decodeIfPresent(Bool.self, forKey: .notifyOnCrash) ?? true
         revealCLI = try container.decodeIfPresent(Bool.self, forKey: .revealCLI) ?? true
@@ -212,6 +221,8 @@ struct SettingsBackup: Codable, Equatable {
         try container.encode(imageUpdateIntervalHours, forKey: .imageUpdateIntervalHours)
         try container.encode(imageUpdateChecksEnabled, forKey: .imageUpdateChecksEnabled)
         try container.encode(appUpdateChecksEnabled, forKey: .appUpdateChecksEnabled)
+        try container.encode(autoStartEngineOnLaunch, forKey: .autoStartEngineOnLaunch)
+        try container.encode(autoStartAlwaysContainers, forKey: .autoStartAlwaysContainers)
         try container.encode(autoRestartEnabled, forKey: .autoRestartEnabled)
         try container.encode(notifyOnCrash, forKey: .notifyOnCrash)
         try container.encode(revealCLI, forKey: .revealCLI)
