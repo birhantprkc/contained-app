@@ -45,6 +45,19 @@ struct ContainerGridProjectionTests {
         ])
     }
 
+    @Test func cardPlacementKeepsRepeatedContainerAppearancesDistinct() {
+        let apple = Self.snapshot(id: "web", image: "nginx:latest", runtimeKind: .appleContainer)
+        let docker = Self.snapshot(id: "web", image: "nginx:latest", runtimeKind: .docker)
+
+        let networkAppearance = ContainerGridCardPlacement(groupID: "network:frontend", snapshot: apple)
+        let databaseAppearance = ContainerGridCardPlacement(groupID: "network:database", snapshot: apple)
+        let dockerAppearance = ContainerGridCardPlacement(groupID: "network:frontend", snapshot: docker)
+
+        #expect(networkAppearance != databaseAppearance)
+        #expect(networkAppearance != dockerAppearance)
+        #expect(Set([networkAppearance, databaseAppearance, dockerAppearance]).count == 3)
+    }
+
     @Test @MainActor func unchangedLargeInputDoesNotRebuildProjection() async {
         let snapshots = (0..<500).map { Self.snapshot(id: "container-\($0)", image: "example/app:latest") }
         let input = ContainerGridProjection.Input(snapshots: snapshots,
@@ -78,7 +91,9 @@ struct ContainerGridProjectionTests {
         #expect(state.projection.groups.flatMap(\.containers).map(\.id) == ["newest"])
     }
 
-    private static func snapshot(id: String, image: String) -> Core.Container.Snapshot {
-        .placeholder(id: id, image: image, runtimeKind: .appleContainer)
+    private static func snapshot(id: String,
+                                 image: String,
+                                 runtimeKind: Core.Runtime.Kind = .appleContainer) -> Core.Container.Snapshot {
+        .placeholder(id: id, image: image, runtimeKind: runtimeKind)
     }
 }

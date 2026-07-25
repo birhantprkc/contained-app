@@ -70,14 +70,15 @@ private struct ContainerHistoryWindow: View {
             if chartPoints.isEmpty {
                 UI.State.Empty(AppText.string("history.empty", defaultValue: "No history yet"),
                                  systemImage: "chart.xyaxis.line",
-                                 description: AppText.string("history.empty.description", defaultValue: "Resource samples accumulate while the container runs."),
+                                 description: AppText.string("history.empty.description", defaultValue: "Samples accumulate while Contained is running."),
                                  minHeight: UI.Chart.Size.emptyHeight)
             } else {
                 chartCard("CPU", unit: percentUnit) {
                     Chart(chartPoints) { point in
                         UI.Chart.Style.primaryLine(
                             LineMark(x: .value("Time", point.timestamp),
-                                     y: .value("CPU", point.cpuPercent))
+                                     y: .value("CPU", point.cpuPercent),
+                                     series: .value("Segment", point.segment))
                         )
                     }
                     .percentHistoryScale()
@@ -86,7 +87,8 @@ private struct ContainerHistoryWindow: View {
                     Chart(chartPoints) { point in
                         UI.Chart.Style.primaryArea(
                             AreaMark(x: .value("Time", point.timestamp),
-                                     y: .value("Memory", point.memoryPercent))
+                                     y: .value("Memory", point.memoryPercent),
+                                     series: .value("Segment", point.segment))
                         )
                     }
                     .percentHistoryScale()
@@ -96,12 +98,12 @@ private struct ContainerHistoryWindow: View {
                         UI.Chart.Style.successLine(
                             LineMark(x: .value("Time", point.timestamp),
                                      y: .value("Rx", point.netRxKBPerSec),
-                                     series: .value("Dir", "Rx"))
+                                     series: .value("Series", "Rx-\(point.segment)"))
                         )
                         UI.Chart.Style.warningLine(
                             LineMark(x: .value("Time", point.timestamp),
                                      y: .value("Tx", point.netTxKBPerSec),
-                                     series: .value("Dir", "Tx"))
+                                     series: .value("Series", "Tx-\(point.segment)"))
                         )
                     }
                 }
@@ -118,8 +120,8 @@ private struct ContainerHistoryWindow: View {
                 }
             }
         }
-        .task(id: HistoryLoadKey(containerID: snapshot.id, cutoff: cutoff)) {
-            let loaded = await app.historyStore.containerHistory(containerID: snapshot.id, since: cutoff)
+        .task(id: HistoryLoadKey(scopedContainerID: snapshot.scopedID, cutoff: cutoff)) {
+            let loaded = await app.historyStore.containerHistory(scopedContainerID: snapshot.scopedID, since: cutoff)
             guard !Task.isCancelled else { return }
             history = loaded
         }
@@ -160,14 +162,18 @@ private struct ContainerHistoryWindow: View {
 }
 
 private struct HistoryLoadKey: Hashable {
-    let containerID: String
+    let scopedContainerID: String
     let cutoff: Date
 }
 
 struct HistoryChartPoint: Identifiable, Equatable {
     static let maximumRenderedPoints = 600
+    /// A missing run of samples means Contained was inactive, asleep, or not running. Segmenting
+    /// prevents Charts from drawing a misleading uninterrupted line across that interval.
+    static let maximumContinuousGap: TimeInterval = 15 * 60
     let id: Int
     let timestamp: Date
+    let segment: Int
     let cpuPercent: Double
     let memoryPercent: Double
     let netRxKBPerSec: Double
@@ -184,11 +190,19 @@ struct HistoryChartPoint: Identifiable, Equatable {
         let cpuLimit = normalization.cpuLimit(for: snapshot)
         let memoryLimit = normalization.memoryLimitBytes(for: snapshot, fallback: memoryFallbackBytes)
 
+        var previousTimestamp: Date?
+        var segment = 0
         return downsample(samples).enumerated().map { index, sample in
+            if let previousTimestamp,
+               sample.timestamp.timeIntervalSince(previousTimestamp) > maximumContinuousGap {
+                segment += 1
+            }
+            previousTimestamp = sample.timestamp
             let cpu = sanitized(sample.cpuFraction) / cpuLimit
             let memory = memoryLimit > 0 ? sanitized(sample.memoryBytes) / Double(memoryLimit) : 0
             return HistoryChartPoint(id: index,
                                      timestamp: sample.timestamp,
+                                     segment: segment,
                                      cpuPercent: percent(cpu),
                                      memoryPercent: percent(memory),
                                      netRxKBPerSec: sanitized(sample.netRxBytesPerSec) / 1024,

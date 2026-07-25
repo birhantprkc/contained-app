@@ -27,9 +27,12 @@ owning runtime:
 - update image when an image update is available
 
 The app serializes refreshes around lifecycle actions so a user action and the
-background polling tick do not fight over inventory and stats streams. Runtime
-identity is part of each container's internal key, so Apple and Docker
-containers with the same runtime ID do not collide.
+background polling tick do not fight over inventory and stats streams. While the
+Containers screen is hidden or Contained is inactive, a five-minute, per-runtime
+batched snapshot keeps persistent history current without a continuous stream.
+Sampling stops when the app quits, and runtime identity is part of each
+container's internal key, so Apple and Docker containers with the same runtime
+ID do not collide.
 
 ## Detail
 

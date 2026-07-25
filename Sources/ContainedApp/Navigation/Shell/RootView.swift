@@ -140,9 +140,11 @@ struct RootView: View {
         .task {
             await app.bootstrapIfNeeded()
             app.coordinator.start(app: app)
+            app.historySamplingCoordinator.start(app: app)
         }
         .onChange(of: scenePhase) { _, phase in
             app.coordinator.isActive = (phase == .active)
+            updateContainerStatsVisibility()
         }
     }
 
@@ -227,7 +229,9 @@ struct RootView: View {
     }
 
     private func updateContainerStatsVisibility() {
-        app.setContainerStatsVisible(ui.selectedSection == .containers && ui.toolbar.activeMorph == nil)
+        app.setContainerStatsVisible(scenePhase == .active
+                                     && ui.selectedSection == .containers
+                                     && ui.toolbar.activeMorph == nil)
     }
 
     private func openSectionOrMorph(_ section: AppSection, morph: UIState.ToolbarMorph) {

@@ -33,7 +33,7 @@ Toolbar-first UI and toolbar panel navigation are experimental opt-ins from
 
 ## Throughout
 
-- Persistent history feeds per-container History and system-wide Activity.
+- Persistent history feeds per-container History and system-wide Activity while Contained is running; it uses a low-overhead five-minute snapshot when live container stats are not visible.
 - App-managed restart and health checks cover behavior not provided by the
   `container` CLI.
 - Local personalization stays local to Contained instead of being written back

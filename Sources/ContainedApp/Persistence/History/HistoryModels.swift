@@ -37,6 +37,7 @@ enum EventKind: String, Codable, CaseIterable, Sendable {
 @Model
 final class EventRecord {
     var timestamp: Date
+    /// Runtime-scoped container identity (`runtime::id`) when this event belongs to a container.
     var containerID: String?
     var kindRaw: String
     var message: String
@@ -113,6 +114,7 @@ struct ContainerHistorySnapshot: Equatable, Sendable {
 @Model
 final class MetricSample {
     var timestamp: Date
+    /// Always a runtime-scoped container identity (`runtime::id`), never a runtime-local ID.
     var containerID: String
     var cpuFraction: Double      // 0…1 of a core-equivalent
     var memoryBytes: Double

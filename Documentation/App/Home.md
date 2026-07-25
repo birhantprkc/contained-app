@@ -19,7 +19,7 @@ Prefer a prebuilt app? Grab the latest `.dmg` from [Releases](https://github.com
 - **Containers** — a grid of personalized Liquid Glass cards with live sparklines, full lifecycle, and a 6-page detail (Overview, Logs, Terminal, Stats, History, Files).
 - **Images / Build / Volumes / Networks / Registries / System** — pull (with Docker Hub search), build (streamed BuildKit log), tag/push/save/load, filesystem export, volume & network CRUD, registry login, service control, `df`, a Prune Center, and guarded kernel/DNS management.
 - **Templates & Compose import** — saved run recipes + built-in starters, and `compose.yaml` import that opens editable, prefilled Run forms for each service.
-- **Persistent history** — SwiftData-backed events and metrics powering a per-container History tab and a system-wide Activity view (Swift Charts).
+- **Persistent history** — SwiftData-backed events and metrics powering a per-container History tab and a system-wide Activity view (Swift Charts). Contained samples while it is running; it does not install a background collector after you quit.
 - **App-managed restart & healthchecks** — `container` has no native `--restart` or healthcheck; Contained runs both itself.
 
 See the full tour on [Features](/Documentation/Features/Features.md).

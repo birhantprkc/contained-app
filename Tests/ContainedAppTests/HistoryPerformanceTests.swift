@@ -109,17 +109,18 @@ struct HistoryPerformanceTests {
     @Test func containerHistoryReaderReturnsWindowedValues() async {
         let database = AppDatabase(isStoredInMemoryOnly: true)
         let now = Date()
+        let containerID = "docker::web"
         database.context.insert(EventRecord(timestamp: now.addingTimeInterval(-120),
-                                            containerID: "web", kind: .ui, message: "old"))
-        database.context.insert(EventRecord(timestamp: now, containerID: "web",
+                                            containerID: containerID, kind: .ui, message: "old"))
+        database.context.insert(EventRecord(timestamp: now, containerID: containerID,
                                             kind: .ui, message: "current"))
-        database.context.insert(MetricSample(timestamp: now, containerID: "web", cpuFraction: 0.2,
+        database.context.insert(MetricSample(timestamp: now, containerID: containerID, cpuFraction: 0.2,
                                              memoryBytes: 1, netRxBytesPerSec: 2, netTxBytesPerSec: 3,
                                              diskReadBytesPerSec: 4, diskWriteBytesPerSec: 5))
         database.save()
         let history = HistoryStore(database: database)
 
-        let snapshot = await history.containerHistory(containerID: "web",
+        let snapshot = await history.containerHistory(scopedContainerID: containerID,
                                                       since: now.addingTimeInterval(-60))
 
         #expect(snapshot.events.map(\.message) == ["current"])

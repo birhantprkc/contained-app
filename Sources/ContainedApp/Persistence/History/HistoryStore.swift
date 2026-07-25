@@ -61,11 +61,12 @@ final class HistoryStore {
     }
 
     /// Persist a metric sample for each running container, throttled to `metricInterval`.
-    func recordMetrics(_ deltas: [String: Core.Metrics.StatsDelta], at date: Date = Date()) {
+    func recordMetrics(_ scopedDeltas: [String: Core.Metrics.StatsDelta], at date: Date = Date()) {
+        guard !scopedDeltas.isEmpty else { return }
         if let last = lastMetricSample, date.timeIntervalSince(last) < metricInterval { return }
         lastMetricSample = date
-        for (id, d) in deltas {
-            context.insert(MetricSample(timestamp: date, containerID: id,
+        for (scopedContainerID, d) in scopedDeltas {
+            context.insert(MetricSample(timestamp: date, containerID: scopedContainerID,
                                         cpuFraction: d.cpuCoreFraction, memoryBytes: Double(d.memoryUsageBytes),
                                         netRxBytesPerSec: d.netRxBytesPerSec, netTxBytesPerSec: d.netTxBytesPerSec,
                                         diskReadBytesPerSec: d.blockReadBytesPerSec, diskWriteBytesPerSec: d.blockWriteBytesPerSec))
@@ -179,11 +180,11 @@ final class HistoryStore {
         activityRevision &+= 1
     }
 
-    func containerHistory(containerID: String, since cutoff: Date) async -> ContainerHistorySnapshot {
+    func containerHistory(scopedContainerID: String, since cutoff: Date) async -> ContainerHistorySnapshot {
         let interval = PerformanceSignposts.activity.beginInterval("ContainerHistoryLoad")
         defer { PerformanceSignposts.activity.endInterval("ContainerHistoryLoad", interval) }
         do {
-            return try await reader.containerHistory(containerID: containerID, since: cutoff)
+            return try await reader.containerHistory(scopedContainerID: scopedContainerID, since: cutoff)
         } catch {
             database.recordFailure(.fetch(model: "Container history", detail: String(describing: error)))
             return ContainerHistorySnapshot()
@@ -343,14 +344,14 @@ actor HistoryReader {
         return try modelContext.fetch(descriptor).map(ActivityEvent.init)
     }
 
-    func containerHistory(containerID: String, since cutoff: Date) throws -> ContainerHistorySnapshot {
+    func containerHistory(scopedContainerID: String, since cutoff: Date) throws -> ContainerHistorySnapshot {
         let metrics = try modelContext.fetch(FetchDescriptor<MetricSample>(
-            predicate: #Predicate { $0.containerID == containerID && $0.timestamp >= cutoff },
+            predicate: #Predicate { $0.containerID == scopedContainerID && $0.timestamp >= cutoff },
             sortBy: [SortDescriptor(\MetricSample.timestamp)]
         )).map(MetricSampleSnapshot.init)
 
         var eventDescriptor = FetchDescriptor<EventRecord>(
-            predicate: #Predicate { $0.containerID == containerID && $0.timestamp >= cutoff },
+            predicate: #Predicate { $0.containerID == scopedContainerID && $0.timestamp >= cutoff },
             sortBy: [SortDescriptor(\EventRecord.timestamp, order: .reverse)]
         )
         eventDescriptor.fetchLimit = 50

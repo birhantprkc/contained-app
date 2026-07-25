@@ -7,11 +7,16 @@ import ContainedCore
 /// filter live in the background context menu and menu commands; tapping a card grows it in place
 /// into a centered detail panel.
 struct ContainersGridView: View {
+    private struct DetailSource: Equatable {
+        let snapshot: Core.Container.Snapshot
+        let placement: ContainerGridCardPlacement
+    }
+
     @Environment(AppModel.self) private var app
     @Environment(UIState.self) private var ui
     @Environment(\.morphSafeAreaManager) private var safeAreaManager
 
-    @State private var detail: Core.Container.Snapshot?
+    @State private var detail: DetailSource?
     @State private var deleting: Core.Container.Snapshot?
     @State private var selecting = false
     @State private var selection: Set<String> = []
@@ -19,7 +24,7 @@ struct ContainersGridView: View {
     /// panel. A single spring on this flag owns the whole motion (no matchedGeometry to fight).
     @State private var expanded = false
     @State private var lifecycleFeedback = 0
-    @State private var pendingDetail: Core.Container.Snapshot?
+    @State private var pendingDetail: DetailSource?
     @State private var detailSourceFrame: CGRect?
     @State private var projectionState = ContainerGridProjectionState()
     @State private var selectedWidgetIndices: [String: Int] = [:]
@@ -97,7 +102,7 @@ struct ContainersGridView: View {
                     UX.Morph.SingleSurface(source: source,
                                            target: target,
                                            progress: expanded ? 1 : 0) {
-                        expandedCard(detail)
+                        expandedCard(detail.snapshot)
                     }
                         .zIndex(10)
                 }
@@ -136,7 +141,7 @@ struct ContainersGridView: View {
         .onChange(of: projectionState.projection.visibleCount) { _, count in ui.search.pageResultCount = count }
         .onChange(of: store.snapshots.map(\.scopedID)) { _, ids in
             selectedWidgetIndices = selectedWidgetIndices.filter { ids.contains($0.key) }
-            if let focusedID = detail?.scopedID ?? pendingDetail?.scopedID,
+            if let focusedID = detail?.snapshot.scopedID ?? pendingDetail?.snapshot.scopedID,
                !ids.contains(focusedID) {
                 // The overlay remains usable if a refresh removes its source card, but its close
                 // animation must fall back to the centered target instead of a stale grid frame.
@@ -161,8 +166,8 @@ struct ContainersGridView: View {
                                      padding: UI.Layout.Spacing.s)
                 } else {
                     LazyVGrid(columns: columns, spacing: UI.Layout.Spacing.m) {
-                        ForEach(group.containers) { snapshot in
-                            gridCard(snapshot)
+                        ForEach(group.containers, id: \.scopedID) { snapshot in
+                            gridCard(snapshot, placement: .init(groupID: group.id, snapshot: snapshot))
                         }
                     }
                 }
@@ -225,10 +230,11 @@ struct ContainersGridView: View {
     }
 
     @ViewBuilder
-    private func gridCard(_ snapshot: Core.Container.Snapshot) -> some View {
-        let selected = detail?.scopedID == snapshot.scopedID
-        let measuresSource = selected || pendingDetail?.scopedID == snapshot.scopedID
-        compactCard(snapshot)
+    private func gridCard(_ snapshot: Core.Container.Snapshot,
+                          placement: ContainerGridCardPlacement) -> some View {
+        let selected = detail?.placement == placement
+        let measuresSource = selected || pendingDetail?.placement == placement
+        compactCard(snapshot, placement: placement)
             // Stays laid out (so the slot is reserved and its frame keeps publishing) but invisible
             // while the promoted overlay grows out of it — no second card to see double.
             .opacity(selected ? 0 : 1)
@@ -238,31 +244,37 @@ struct ContainersGridView: View {
                     GeometryReader { proxy in
                         Color.clear
                             .onAppear {
-                                updateDetailSource(proxy.frame(in: .named("grid")), snapshot: snapshot)
+                                updateDetailSource(proxy.frame(in: .named("grid")),
+                                                   snapshot: snapshot,
+                                                   placement: placement)
                             }
                             .onChange(of: proxy.frame(in: .named("grid"))) { _, frame in
-                                updateDetailSource(frame, snapshot: snapshot)
+                                updateDetailSource(frame, snapshot: snapshot, placement: placement)
                             }
                     }
                 }
             }
     }
 
-    private func updateDetailSource(_ frame: CGRect, snapshot: Core.Container.Snapshot) {
+    private func updateDetailSource(_ frame: CGRect,
+                                    snapshot: Core.Container.Snapshot,
+                                    placement: ContainerGridCardPlacement) {
         guard frame.isUsableForMorph else { return }
+        guard pendingDetail?.placement == placement || detail?.placement == placement else { return }
         if detailSourceFrame?.isClose(to: frame) != true { detailSourceFrame = frame }
-        guard detail == nil, pendingDetail?.scopedID == snapshot.scopedID else { return }
+        guard detail == nil, pendingDetail?.placement == placement else { return }
         pendingDetail = nil
-        detail = snapshot
+        detail = DetailSource(snapshot: snapshot, placement: placement)
         expanded = false
         DispatchQueue.main.async {
             withAnimation(detailSpring) { expanded = true }
         }
     }
 
-    private func compactCard(_ snapshot: Core.Container.Snapshot) -> some View {
+    private func compactCard(_ snapshot: Core.Container.Snapshot,
+                             placement: ContainerGridCardPlacement) -> some View {
         containerCard(snapshot, isExpanded: false) {
-            selecting ? toggle(snapshot.scopedID) : openDetail(snapshot)
+            selecting ? toggle(snapshot.scopedID) : openDetail(snapshot, placement: placement)
         }
     }
 
@@ -350,11 +362,12 @@ struct ContainersGridView: View {
         return CGSize(width: width, height: height)
     }
 
-    private func openDetail(_ snapshot: Core.Container.Snapshot) {
+    private func openDetail(_ snapshot: Core.Container.Snapshot,
+                            placement: ContainerGridCardPlacement) {
         guard detail == nil, pendingDetail == nil else { return }
         // Attach geometry only to the tapped card. Its first measurement promotes the card into the
         // overlay, eliminating continuous frame publication from every visible grid item.
-        pendingDetail = snapshot
+        pendingDetail = DetailSource(snapshot: snapshot, placement: placement)
         detailSourceFrame = nil
         expanded = false
     }

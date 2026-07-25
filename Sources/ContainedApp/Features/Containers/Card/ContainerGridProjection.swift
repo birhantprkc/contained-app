@@ -149,6 +149,19 @@ struct ContainerGridProjection: Equatable, Sendable {
     }
 }
 
+/// The identity of one visible card, including the group that placed it. A container can legitimately
+/// appear in more than one group (for example, when it is attached to two networks), so its scoped
+/// runtime ID alone is not enough to identify a particular grid slot.
+struct ContainerGridCardPlacement: Hashable, Sendable {
+    let groupID: String
+    let containerScopedID: String
+
+    init(groupID: String, snapshot: Core.Container.Snapshot) {
+        self.groupID = groupID
+        self.containerScopedID = snapshot.scopedID
+    }
+}
+
 @MainActor
 @Observable
 final class ContainerGridProjectionState {

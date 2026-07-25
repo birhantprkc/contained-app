@@ -330,6 +330,24 @@ struct ContainersStoreRefreshTests {
         #expect(downsampled.last!.timestamp <= samples.last!.timestamp)
     }
 
+    @Test func historyChartBreaksLinesAfterLongSamplingGap() {
+        let snapshot = Self.snapshot(id: "web", cpus: 1, memoryInBytes: 1)
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        let samples = [
+            MetricSampleSnapshot(timestamp: start, containerID: "apple-container::web", cpuFraction: 0,
+                                  memoryBytes: 0, netRxBytesPerSec: 0, netTxBytesPerSec: 0,
+                                  diskReadBytesPerSec: 0, diskWriteBytesPerSec: 0),
+            MetricSampleSnapshot(timestamp: start.addingTimeInterval(HistoryChartPoint.maximumContinuousGap + 1),
+                                  containerID: "apple-container::web", cpuFraction: 0,
+                                  memoryBytes: 0, netRxBytesPerSec: 0, netTxBytesPerSec: 0,
+                                  diskReadBytesPerSec: 0, diskWriteBytesPerSec: 0)
+        ]
+
+        #expect(HistoryChartPoint.points(from: samples,
+                                         snapshot: snapshot,
+                                         normalization: .containerSpecific).map(\.segment) == [0, 1])
+    }
+
     @Test func changingStatsNormalizationRebuildsDisplayHistories() {
         let store = ContainersStore()
         let start = Date(timeIntervalSinceReferenceDate: 1_000)

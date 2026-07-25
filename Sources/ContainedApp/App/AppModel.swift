@@ -25,6 +25,7 @@ final class AppModel {
     let healthChecks: HealthCheckStore
     let health = HealthMonitor()
     let historyStore: HistoryStore
+    let historySamplingCoordinator = HistorySamplingCoordinator()
     let updater = UpdaterController()
     let migrator = StateMigrator()
     let logger: AppLogger
@@ -41,12 +42,22 @@ final class AppModel {
     @ObservationIgnored private var containerStatsStreamIDs: [String] = []
     @ObservationIgnored private var containerStatsStreamGeneration = 0
     @ObservationIgnored private var lastRecordedStatsRevision = 0
+    @ObservationIgnored private var backgroundHistorySamplingInFlight = false
+    @ObservationIgnored private var backgroundHistoryBaselines: [String: BackgroundHistoryBaseline] = [:]
+    /// Avoid turning an unavailable runtime into a new Activity item every five minutes. A changed
+    /// failure is still retained in the diagnostic log to help support investigate it.
+    @ObservationIgnored private var backgroundHistoryFailures: [Core.Runtime.Kind: String] = [:]
     @ObservationIgnored private var bootstrapTask: Task<Void, Never>?
     @ObservationIgnored private var didCompleteInitialBootstrap = false
     @ObservationIgnored private var didAttemptLaunchEngineStart = false
     @ObservationIgnored var migrationStabilizationTimeout: TimeInterval = 120
     @ObservationIgnored var migrationPollInterval: TimeInterval = 2
     @ObservationIgnored let diagnosticLogger = Logger(subsystem: "app.contained.Contained", category: "diagnostic")
+
+    private struct BackgroundHistoryBaseline {
+        let stats: Core.Metrics.ContainerStats
+        let observedAt: Date
+    }
 
     // Resource caches shared by toolbar panels, creation pages, and the container grid.
     private(set) var volumes: [Core.Volume.Resource] = []
@@ -285,6 +296,7 @@ final class AppModel {
 
         if await startEngineOnLaunchIfNeeded() { return }
         await refreshSystem()
+        historySamplingCoordinator.wake()
     }
 
     /// Performs the one launch-time engine-start attempt. Kept separate from bootstrap so the
@@ -333,6 +345,7 @@ final class AppModel {
             // consumer is hidden made the app spend most of its idle time diffing metrics.
             stopContainerStatsStream()
         }
+        historySamplingCoordinator.wake()
     }
 
     func setStatsNormalizationMode(_ mode: Core.Metrics.NormalizationMode) {
@@ -542,6 +555,9 @@ final class AppModel {
     }
 
     private func updateContainerStatsStream() {
+        // A background snapshot owns the runtime until it has applied its one batched result. This
+        // makes foreground/background transitions exclusive instead of issuing overlapping stats.
+        guard !backgroundHistorySamplingInFlight else { return }
         guard containerStatsVisible else {
             stopContainerStatsStream()
             return
@@ -612,6 +628,59 @@ final class AppModel {
         guard containers.statsRevision != lastRecordedStatsRevision else { return }
         lastRecordedStatsRevision = containers.statsRevision
         historyStore.recordMetrics(containers.statsByID)
+    }
+
+    /// Capture a single low-priority history sample when the Containers screen is not driving its
+    /// live stats stream. This deliberately refreshes only container inventory and uses one stats
+    /// request per runtime; it has no lifecycle outside the running Contained process.
+    func collectBackgroundHistoryIfNeeded(at observedAt: Date = Date()) async {
+        guard !containerStatsVisible,
+              !backgroundHistorySamplingInFlight,
+              let client else { return }
+
+        backgroundHistorySamplingInFlight = true
+        defer {
+            backgroundHistorySamplingInFlight = false
+            if containerStatsVisible { updateContainerStatsStream() }
+        }
+
+        await containers.refresh()
+        guard !Task.isCancelled, !containerStatsVisible else { return }
+
+        let running = containers.running
+        let runningScopedIDs = Set(running.map(\.scopedID))
+        // A stopped or removed container must get a fresh baseline if it runs again; carrying its
+        // old counters forward would manufacture a rate across a process lifetime.
+        backgroundHistoryBaselines = backgroundHistoryBaselines.filter { runningScopedIDs.contains($0.key) }
+        guard !running.isEmpty else { return }
+
+        let groups = Dictionary(grouping: running, by: \.runtimeKind)
+        var deltas: [String: Core.Metrics.StatsDelta] = [:]
+        for runtimeKind in groups.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard !Task.isCancelled, !containerStatsVisible, let snapshots = groups[runtimeKind] else { return }
+            do {
+                let stats = try await client.stats(ids: snapshots.map(\.id).sorted(), runtimeKind: runtimeKind)
+                guard !Task.isCancelled, !containerStatsVisible else { return }
+                backgroundHistoryFailures[runtimeKind] = nil
+                for current in stats where runningScopedIDs.contains(current.id) {
+                    if let previous = backgroundHistoryBaselines[current.id] {
+                        deltas[current.id] = .between(previous: previous.stats,
+                                                       current: current,
+                                                       interval: observedAt.timeIntervalSince(previous.observedAt))
+                    }
+                    backgroundHistoryBaselines[current.id] = BackgroundHistoryBaseline(stats: current,
+                                                                                         observedAt: observedAt)
+                }
+            } catch {
+                let message = error.appDisplayMessage
+                if backgroundHistoryFailures[runtimeKind] != message {
+                    backgroundHistoryFailures[runtimeKind] = message
+                    diagnosticLogger.error("Background history sample failed for \(runtimeKind.rawValue, privacy: .public): \(message, privacy: .private(mask: .hash))")
+                }
+            }
+        }
+        guard !Task.isCancelled, !containerStatsVisible else { return }
+        historyStore.recordMetrics(deltas, at: observedAt)
     }
 
     /// Refresh the data behind the System toolbar panel (volumes + a forced `system df`). Called from
@@ -1133,9 +1202,11 @@ final class AppModel {
         }
         await refreshSystem()
         guard !actions.contains(.start) || runtimeIsReady(kind) else { return false }
-        guard actions.contains(.start), settings.autoStartAlwaysContainers else { return true }
-        await restoreAlwaysContainers(afterStarting: kind, client: client)
-        await refreshSystem()
+        if actions.contains(.start), settings.autoStartAlwaysContainers {
+            await restoreAlwaysContainers(afterStarting: kind, client: client)
+            await refreshSystem()
+        }
+        historySamplingCoordinator.wake()
         return true
     }
 
