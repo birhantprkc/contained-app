@@ -1,3 +1,5 @@
+- Optional Startup settings to start a stopped container engine when Contained opens and to restore stopped containers marked Always after Contained starts that engine.
+
 # Faster, smoother navigation
 
 - Made the experimental toolbar-first interface more responsive at idle and while moving between pages by removing persistent-data work from navigation controls.
