@@ -3,15 +3,18 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.162+98eb3d8</title>
-            <pubDate>Sat, 25 Jul 2026 18:07:11 +0000</pubDate>
-            <sparkle:version>162</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.162+98eb3d8</sparkle:shortVersionString>
+            <title>1.0.0-nightly.166+116c6b4</title>
+            <pubDate>Sat, 25 Jul 2026 19:01:55 +0000</pubDate>
+            <sparkle:version>166</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.166+116c6b4</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
 <ul>
 <li>Optional Startup settings to start a stopped container engine when Contained opens and to restore stopped containers marked Always after Contained starts that engine.</li>
+<li>Fixed container-grid cards and their detail transition overlapping when a container appears in multiple groups or runtimes.</li>
+<li>Fixed per-container History charts loading no data for runtime-scoped containers.</li>
+<li>Container history now keeps low-overhead, five-minute snapshots while Contained is running but its Containers view is hidden or inactive; charts mark long collection gaps instead of implying uninterrupted data.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -94,7 +97,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/nightly-latest/Contained-1.0.0-nightly.162+98eb3d8.dmg" length="9312242" type="application/octet-stream" sparkle:edSignature="RhUOBc06OZycynTSMSYzQoCtoPK6oaM4rXH3mogKt9yJv0q43JShBecGZw38F+2Xv/WIQrXoPeVjH5sCNyfcBg=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/nightly-latest/Contained-1.0.0-nightly.166+116c6b4.dmg" length="9341634" type="application/octet-stream" sparkle:edSignature="1qzuo7o2whbbHlDjEd8RBR6sg+sF7aJJE6bEGpGMRZsQjK47R0CbMSpaKvkEK22UObskNTBW3BzpAr4gU7EpBA=="/>
         </item>
     </channel>
 </rss>
