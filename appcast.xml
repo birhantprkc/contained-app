@@ -3,13 +3,18 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.180+1c2be34</title>
-            <pubDate>Thu, 13 Aug 2026 05:13:24 +0000</pubDate>
-            <sparkle:version>180</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.180+1c2be34</sparkle:shortVersionString>
+            <title>1.0.0-nightly.182+e322de2</title>
+            <pubDate>Thu, 13 Aug 2026 05:36:21 +0000</pubDate>
+            <sparkle:version>182</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.182+e322de2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<h2>Full Release Notes</h2>
+            <description><![CDATA[<h2>Changes Since Last Nightly</h2>
+<h3>Fixed</h3>
+<ul>
+<li>Nightly builds now use permanent versioned GitHub releases, preserving older builds for rollback and keeping Sparkle enclosure URLs immutable.</li>
+</ul>
+<h2>Full Release Notes</h2>
 <h3>Highlights</h3>
 <ul>
 <li>First complete Contained release: a native macOS 26 SwiftUI control surface for Apple's `container` CLI.</li>
@@ -90,7 +95,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/nightly-latest/Contained-1.0.0-nightly.180+1c2be34.dmg" length="9365657" type="application/octet-stream" sparkle:edSignature="fx2AsGfOQlPvTHzdl7p1bisAPlpWPJ69hGAlJBBp1npiLIa7SSofu8y3ee4zFvsD8/am+TgRitj2YVK0Uxd+BQ=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.182+e322de2/Contained-1.0.0-nightly.182+e322de2.dmg" length="9365709" type="application/octet-stream" sparkle:edSignature="UGluuvQJDfSJI4QrYBtQpqYQYvO73ZekY/goQPLNZXOz3/szutkFmZzz4DC6sEXFLReG1L+zkq7ce81Kl5yIDw=="/>
         </item>
     </channel>
 </rss>
