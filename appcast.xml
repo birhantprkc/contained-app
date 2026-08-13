@@ -3,19 +3,15 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.174+74a3fec</title>
-            <pubDate>Sat, 25 Jul 2026 19:54:26 +0000</pubDate>
-            <sparkle:version>174</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.174+74a3fec</sparkle:shortVersionString>
+            <title>1.0.0-nightly.177+d5ca6a2</title>
+            <pubDate>Thu, 13 Aug 2026 05:04:33 +0000</pubDate>
+            <sparkle:version>177</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.177+d5ca6a2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
 <ul>
-<li>Optional Startup settings to start a stopped container engine when Contained opens and to restore stopped containers marked Always after Contained starts that engine.</li>
-<li>Fixed container-grid cards and their detail transition overlapping when a container appears in multiple groups or runtimes.</li>
-<li>Fixed per-container History charts loading no data for runtime-scoped containers.</li>
-<li>Container history now keeps low-overhead, five-minute snapshots while Contained is running but its Containers view is hidden or inactive; charts mark long collection gaps instead of implying uninterrupted data.</li>
-<li>Stabilized the container grid so live metric updates no longer reflow card widths between rows, and tightened its responsive size so three columns fit in a narrower window.</li>
+<li>Fixed Add, Run, and Edit crashing in packaged builds when ContainedCore localization resources were missing.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -98,7 +94,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/nightly-latest/Contained-1.0.0-nightly.174+74a3fec.dmg" length="9342122" type="application/octet-stream" sparkle:edSignature="GcUNb/SlF4We9fcHXs9QOrWkQt0BlkhNPMPoTDpLyqAqH3vulHhf7QaujUfoQyO/aIAVss5sJlEzNY2UozWiAQ=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/nightly-latest/Contained-1.0.0-nightly.177+d5ca6a2.dmg" length="9364986" type="application/octet-stream" sparkle:edSignature="x++gcTQr44m7a4OT7rXGEVuoOS7vftY0pG0b1QOY9UFgiHPTYEELWnetsOXkLkevBq0P6xP+gQ3nYVneCiiZDA=="/>
         </item>
     </channel>
 </rss>
