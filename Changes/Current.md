@@ -1,1 +1,0 @@
-- Fixed Add, Run, and Edit crashing in packaged builds when ContainedCore localization resources were missing.

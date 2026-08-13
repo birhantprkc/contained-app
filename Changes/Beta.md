@@ -1,3 +1,5 @@
+- Fixed Add, Run, and Edit crashing in packaged builds when ContainedCore localization resources were missing.
+
 - Optional Startup settings to start a stopped container engine when Contained opens and to restore stopped containers marked Always after Contained starts that engine.
 - Fixed container-grid cards and their detail transition overlapping when a container appears in multiple groups or runtimes.
 - Fixed per-container History charts loading no data for runtime-scoped containers.
