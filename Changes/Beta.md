@@ -1,3 +1,7 @@
+### Fixed
+
+- Nightly builds now use permanent versioned GitHub releases, preserving older builds for rollback and keeping Sparkle enclosure URLs immutable.
+
 - Fixed Add, Run, and Edit crashing in packaged builds when ContainedCore localization resources were missing.
 
 - Optional Startup settings to start a stopped container engine when Contained opens and to restore stopped containers marked Always after Contained starts that engine.
