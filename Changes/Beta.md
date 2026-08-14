@@ -1,3 +1,5 @@
+- Refined image and container cards with clearer tag typography, stable update-check ordering, shared grid elevation, smoother expanded-card shadows, tighter responsive sizing, and more flexible window dimensions.
+
 - Fixed stale image-update badges reappearing after launch by consolidating duplicate persisted tag records and reconciling saved results with the live runtime inventory.
 - Simplified navigation around the permanent toolbar and panels, retiring the legacy sidebar and redundant full-page utility routes.
 - Made card footer metadata fill and scroll within the space left by intrinsic action buttons, and removed the five-widget limit from container personalization.
