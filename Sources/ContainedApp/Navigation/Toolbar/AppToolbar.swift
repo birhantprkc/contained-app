@@ -84,8 +84,7 @@ struct AppToolbar: View {
     private var topToolbarRow: some View {
         HStack(spacing: UI.Toolbar.Spacing.groupSpacing) {
             settingsZone
-            ToolbarPageSwitcher()
-            ToolbarPageContextOptions()
+            ToolbarContainerGroupSwitcher()
             Spacer(minLength: UI.Layout.Spacing.m)
             searchZone
         }
@@ -131,7 +130,6 @@ struct AppToolbar: View {
     private var bottomToolbarRow: some View {
         HStack(spacing: UI.Toolbar.Spacing.groupSpacing) {
             systemStatusButton
-            ToolbarPageFilterOptions()
             Spacer(minLength: UI.Layout.Spacing.m)
             bottomActionGroup
         }
@@ -241,9 +239,10 @@ struct AppToolbar: View {
                                           backdropStyle: .dim,
                                           showsBackdrop: true,
                                           closeRequestToken: toolbarImageCloseRequestToken,
-                                          onBackdropTap: closeToolbarImageDetail) {
+                                          onBackdropTap: closeToolbarImageDetail) { controlsVisible in
                 ToolbarImageGroupCard(group: currentToolbarImageGroup(detail),
                                       isExpanded: true,
+                                      controlsVisible: controlsVisible,
                                       onTap: {},
                                       onClose: closeToolbarImageDetail)
             }

@@ -125,20 +125,11 @@ Guidelines:
 
 ## Toolbar shell
 
-`AppShell` owns the permanent top and bottom toolbar chrome. Its primary page
-body receives toolbar-aware safe areas from `UX.SafeArea.Manager`; scrollable
-page interiors add bottom content clearance so the last row can move above the
-toolbar without lifting the page itself. Toolbar page actions live in the top
-row to the left of search; page filters live in the bottom row next to System
-and hide on pages without filters.
-
-Bottom page filters use the shared toolbar menu-button shape. Containers,
-Images, and Networks expose their page-specific grouping/sorting
-state from this slot rather than inventing page-local controls.
-
-Contextual page controls act on the current page. They should switch page or
-subpage state directly rather than opening morph panels. Global toolbar buttons
-and menu commands own panel presentation.
+`AppShell` owns the permanent top and bottom toolbar chrome. Its Containers body
+receives toolbar-aware safe areas from `UX.SafeArea.Manager`; scrollable content
+adds bottom clearance so the last row can move above the toolbar without lifting
+the page itself. The top-left container-group menu also owns container sorting
+and the running-only filter. Panel-specific controls stay inside their panel headers.
 
 Panel-owned destinations such as System, Templates, Activity, and Settings stay
 out of page navigation and remain available through toolbar/menu entry points.
@@ -194,15 +185,24 @@ false` for cards inside already-elevated morph panels.
 
 `UI.Card.Scaffold` owns the card anatomy:
 
-- the header is always visible and stays outside the expanding body
-- page controls are declared with `UI.Card.Pages`, stay mounted in the header
-  trailing slot, and use `controlsReveal` instead of app-local overlays or
-  conditional trailing views
-- the body appears only while expanded
-- widgets stay sticky on `.large` cards and move into the expanded body on
-  `.medium`
-- footers stay sticky on `.medium` and `.large` cards and move into the
-  expanded body on `.small`
+- compact cards use the denser card radius, while expanded cards adopt the
+  panel surface radius; promoted cards pass their presentation lifecycle through
+  `expansionPresented` so that radius change animates with the morph
+- the header is always visible and stays pinned above the expanding body
+- page controls are declared with `UI.Card.Pages`; expanded cards overlay that
+  trailing rail so it never changes the header's measured height or title position
+- the expanded body is the only flexible, clipped region, revealing its content
+  as the promoted surface grows
+- expanded cards default to `ContentSizing.fill`; use `ContentSizing.hug` when
+  the card should retain its intrinsic content height instead of filling its host;
+  hugged content becomes a scrolling viewport only when it exceeds available height
+- expanded widgets remain sticky immediately above the footer, regardless of
+  compact card density
+- expanded footers remain pinned to the bottom, regardless of compact card density
+
+`UX.Morph.SingleSurface` owns promoted-card geometry. Both direct promoted cards
+and `UX.Morph.SingleSurfaceExpander` use that same rect interpolation so feature
+views do not recreate frame/position animation behavior.
 
 `card surface internals`, `card header internals`, and `card page-control internals` are
 package-internal composition pieces used by `UI.Card.Scaffold`.

@@ -6,6 +6,7 @@ import ContainedCore
 /// grid card and the centered expanded detail card.
 struct ContainerCard: View {
     @Environment(AppModel.self) private var app
+    @Environment(UIState.self) private var ui
     @Environment(\.openURL) private var openURL
 
     let snapshot: Core.Container.Snapshot
@@ -20,7 +21,6 @@ struct ContainerCard: View {
     var isBusy: Bool
     var imageUpdateState: Core.Image.ContainerUpdateState = .unknown
     var isExpanded: Bool = false
-    var cornerRadiusOverride: CGFloat?
     /// Whether the expanded card's controls (footer buttons + close) are shown. The grid drops this
     /// the instant a close begins so the glass buttons fade out *before* the shrink finishes.
     var controlsVisible: Bool = true
@@ -77,6 +77,7 @@ struct ContainerCard: View {
     private var tint: Color { styleForDisplay.color }
     private var name: String { styleForDisplay.displayName(fallback: snapshot.id) }
     private var isRunning: Bool { presentation == .running }
+    private var isStopped: Bool { presentation == .stopped }
     private var activeWidgetIndex: Int {
         let enabled = styleForDisplay.widgets.indices.filter { styleForDisplay.widget(at: $0).enabled }
         let selected = selectedWidgetIndex?.wrappedValue ?? localSelectedWidgetIndex
@@ -136,7 +137,7 @@ struct ContainerCard: View {
     private var cardSurface: some View {
         UI.Card.Scaffold(size: cardSize,
                      isExpanded: isExpanded,
-                     cornerRadiusOverride: cornerRadiusOverride,
+                     expansionPresented: controlsVisible,
                      controlsVisible: controlsVisible,
                      isSelected: isSelected,
                      fill: styleForDisplay.fillBackground ? styleForDisplay.color : nil,
@@ -185,6 +186,7 @@ struct ContainerCard: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: UI.Card.Metric.sparklineHeight)
         }
+        .compactMuted(isStopped)
         .designCardProgressOverlay(when: isBusy)
     }
 
@@ -305,6 +307,23 @@ struct ContainerCard: View {
             Label(imageUpdateState.requiresUpdate ? AppText.updateContainerAction : AppText.rebuildContainerAction,
                   systemImage: imageUpdateState.requiresUpdate ? "arrow.down.circle" : "arrow.triangle.2.circlepath")
         }
+        Menu {
+            if ui.containerGroups.isEmpty {
+                Text("Create a group from the toolbar first")
+            } else {
+                ForEach(ui.containerGroups) { group in
+                    Button {
+                        ui.toggleContainer(snapshot.scopedID, in: group.id)
+                    } label: {
+                        Label(group.name,
+                              systemImage: ui.containsContainer(snapshot.scopedID, in: group.id) ? "checkmark.circle.fill" : "folder")
+                    }
+                }
+            }
+        } label: {
+            Label("Add to Group", systemImage: "folder.badge.plus")
+        }
+        .disabled(ui.containerGroups.isEmpty)
         UI.Copy.ValueLabel("Copy ID", value: snapshot.id)
         Divider()
         Button(role: .destructive) { onDelete() } label: { Label("Delete", systemImage: "trash") }

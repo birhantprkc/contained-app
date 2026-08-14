@@ -1,6 +1,13 @@
 import SwiftUI
 
 public extension UI.Card {
+enum ContentSizing {
+    case fill
+    case hug
+
+    public var fillsAvailableHeight: Bool { self == .fill }
+}
+
 enum Size {
     case small, medium, large
 
@@ -50,9 +57,12 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
                          FooterActions: View, Widget: View>: View {
     var size: UI.Card.Size
     var isExpanded = false
+    var expansionPresented: Bool?
+    var contentSizing: UI.Card.ContentSizing = .fill
     var cornerRadiusOverride: CGFloat?
     var controlsVisible = true
     var isSelected = false
+    var compactMuted = false
     var showsFooter = true
     var showsWidget = true
     /// When set, the selected state reads as a soft `white.opacity` wash (matching a hovered glass
@@ -75,6 +85,7 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
 
     @State private var hovering = false
     @Environment(\.cardMaterial) private var cardMaterial
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Render the selected state as a soft fill wash instead of the accent stroke.
     func selectionFill(_ on: Bool = true) -> Self {
@@ -85,9 +96,12 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
 
     init(size: UI.Card.Size,
          isExpanded: Bool = false,
+         expansionPresented: Bool? = nil,
+         contentSizing: UI.Card.ContentSizing = .fill,
          cornerRadiusOverride: CGFloat? = nil,
          controlsVisible: Bool = true,
          isSelected: Bool = false,
+         compactMuted: Bool = false,
          showsFooter: Bool = true,
          showsWidget: Bool = true,
          fill: Color? = nil,
@@ -105,9 +119,12 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
          @ViewBuilder widget: @escaping () -> Widget) {
         self.size = size
         self.isExpanded = isExpanded
+        self.expansionPresented = expansionPresented
+        self.contentSizing = contentSizing
         self.cornerRadiusOverride = cornerRadiusOverride
         self.controlsVisible = controlsVisible
         self.isSelected = isSelected
+        self.compactMuted = compactMuted
         self.showsFooter = showsFooter
         self.showsWidget = showsWidget
         self.fill = fill
@@ -133,16 +150,18 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
     }
 
     private var surface: some View {
-        let cornerRadius = cornerRadiusOverride ?? (isExpanded ? UI.Tokens.Radius.sheet : UI.Tokens.Radius.card)
+        let cornerRadius = cornerRadiusOverride
+            ?? (usesExpandedRadius ? UI.Card.Radius.expanded : UI.Card.Radius.compact)
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        return cardContent
+        return emphasizedCardContent
             .frame(maxWidth: isExpanded ? UI.Card.ExpandedMetrics.maxWidth : .infinity,
-                   alignment: .leading)
+                   maxHeight: fillsExpandedHeight ? .infinity : nil,
+                   alignment: .topLeading)
             .clipShape(shape)
             .designCardMaterial(cardMaterial,
                                   cornerRadius: cornerRadius,
                                   shadow: elevated,
-                                  fill: fill,
+                                  fill: resolvedFill,
                                   fillOpacity: fillOpacity,
                                   gradient: gradient,
                                   gradientAngle: gradientAngle,
@@ -161,27 +180,61 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
                 }
             }
             .animation(.spring(response: 0.42, dampingFraction: 0.86), value: isExpanded)
+            .animation(reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86),
+                       value: usesExpandedRadius)
             .animation(.spring(response: 0.42, dampingFraction: 0.86), value: cornerRadiusOverride)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: compactContentIsMuted)
+    }
+
+    /// A single presentation layer owns compact-card dimming so nested header, widget, and action
+    /// elements never compound opacity. The material surface remains outside this layer.
+    private var emphasizedCardContent: some View {
+        cardContent
+            .grayscale(compactContentIsMuted ? 1 : 0)
+            .opacity(compactContentIsMuted ? UI.Card.Opacity.mutedContent : 1)
+    }
+
+    private var compactContentIsMuted: Bool {
+        compactMuted && !isExpanded && !hovering
+    }
+
+    private var resolvedFill: Color? {
+        guard compactContentIsMuted, fill != nil else { return fill }
+        return .gray
     }
 
     @ViewBuilder
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             stickyHeader
+                .fixedSize(horizontal: false, vertical: true)
                 .layoutPriority(1)
             if isExpanded {
-                expandedBody
+                presentedExpandedBody
                     .layoutPriority(0)
             }
             if shouldShowStickyWidget {
                 stickyWidget
+                    .fixedSize(horizontal: false, vertical: true)
                     .layoutPriority(1)
             }
             if shouldShowStickyFooter {
                 stickyFooter(showActions: isExpanded ? controlsVisible : hovering)
+                    .fixedSize(horizontal: false, vertical: true)
                     .layoutPriority(1)
             }
         }
+        .frame(maxWidth: .infinity,
+               maxHeight: fillsExpandedHeight ? .infinity : nil,
+               alignment: .top)
+    }
+
+    private var fillsExpandedHeight: Bool {
+        isExpanded && contentSizing.fillsAvailableHeight
+    }
+
+    private var usesExpandedRadius: Bool {
+        isExpanded && (expansionPresented ?? true)
     }
 
     private var stickyHeader: some View {
@@ -200,6 +253,26 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
                 stickyFooter(showActions: controlsVisible)
                     .layoutPriority(1)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var presentedExpandedBody: some View {
+        if contentSizing == .fill {
+            expandedBody
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .clipped()
+        } else {
+            ViewThatFits(in: .vertical) {
+                expandedBody
+                    .fixedSize(horizontal: false, vertical: true)
+                ScrollView(.vertical) {
+                    expandedBody
+                }
+                .scrollEdgeEffectStyle(.soft, for: .all)
+            }
+            .frame(maxWidth: .infinity, alignment: .top)
+            .clipped()
         }
     }
 
@@ -225,24 +298,22 @@ struct CardSurface<Header: View, BodyContent: View, FooterLeading: View,
     private var widgetBand: some View {
         widget()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, UI.Tokens.Card.padding)
-            .padding(.bottom, UI.Tokens.Card.padding)
     }
 
     private var shouldShowStickyWidget: Bool {
-        showsWidget && hasWidgetSlot && size.keepsWidgetSticky
+        showsWidget && hasWidgetSlot && (isExpanded || size.keepsWidgetSticky)
     }
 
     private var shouldEmbedWidgetInBody: Bool {
-        showsWidget && hasWidgetSlot && size.embedsWidgetInBody
+        showsWidget && hasWidgetSlot && !isExpanded && size.embedsWidgetInBody
     }
 
     private var shouldShowStickyFooter: Bool {
-        showsFooter && hasFooterSlot && size.keepsFooterSticky
+        showsFooter && hasFooterSlot && (isExpanded || size.keepsFooterSticky)
     }
 
     private var shouldEmbedFooterInBody: Bool {
-        showsFooter && hasFooterSlot && size.embedsFooterInBody
+        showsFooter && hasFooterSlot && !isExpanded && size.embedsFooterInBody
     }
 
     private var hasWidgetSlot: Bool {
@@ -265,7 +336,6 @@ private struct CardMaterialSurface: ViewModifier {
     var gradient: Bool
     var gradientAngle: Double
     var blendMode: UI.Theme.ColorBlendMode
-    @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -306,22 +376,9 @@ private struct CardMaterialSurface: ViewModifier {
         }
     }
 
-    private var shadowColor: Color { SharedSurfaceRendering.shadowColor(for: colorScheme) }
-    private var shadowRadius: CGFloat { 10 }
-    private var shadowY: CGFloat { 4 }
-}
-
-public extension View {
-    @ViewBuilder
-    func designCardSelectionOverlay(when isSelected: Bool) -> some View {
-        overlay {
-            if isSelected {
-                RoundedRectangle(cornerRadius: UI.Tokens.Radius.card, style: .continuous)
-                    .fill(UI.Theme.Material.toolbarHoverFill)
-                    .allowsHitTesting(false)
-            }
-        }
-    }
+    private var shadowColor: Color { UI.Theme.Material.elevatedSurfaceShadow }
+    private var shadowRadius: CGFloat { UI.Theme.Material.elevatedSurfaceShadowRadius }
+    private var shadowY: CGFloat { UI.Theme.Material.elevatedSurfaceShadowY }
 }
 
 private extension View {
@@ -491,22 +548,4 @@ extension CardSurface where Widget == EmptyView {
     }
     .padding(UI.Tokens.Space.xl)
     .frame(width: 420)
-}
-
-#Preview("Card Selection Overlay") {
-    VStack(spacing: UI.Tokens.Space.m) {
-        Text("Unselected")
-            .frame(maxWidth: .infinity)
-            .padding(UI.Tokens.Space.l)
-            .materialSurface(.regular, cornerRadius: UI.Tokens.Radius.card)
-            .designCardSelectionOverlay(when: false)
-
-        Text("Selected")
-            .frame(maxWidth: .infinity)
-            .padding(UI.Tokens.Space.l)
-            .materialSurface(.regular, cornerRadius: UI.Tokens.Radius.card)
-            .designCardSelectionOverlay(when: true)
-    }
-    .padding(UI.Tokens.Space.xl)
-    .frame(width: 320)
 }
