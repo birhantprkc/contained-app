@@ -3,16 +3,16 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.182+e322de2</title>
-            <pubDate>Thu, 13 Aug 2026 05:36:21 +0000</pubDate>
-            <sparkle:version>182</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.182+e322de2</sparkle:shortVersionString>
+            <title>1.0.0-nightly.185+2a1b950</title>
+            <pubDate>Fri, 14 Aug 2026 10:59:49 +0000</pubDate>
+            <sparkle:version>185</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.185+2a1b950</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
-<h3>Fixed</h3>
+<h3>Changed</h3>
 <ul>
-<li>Nightly builds now use permanent versioned GitHub releases, preserving older builds for rollback and keeping Sparkle enclosure URLs immutable.</li>
+<li>The menu-bar extra is now a compact runtime center with a stable sheet-material backdrop, shared System-panel cards, per-runtime status and controls, resource metrics, and focused quick actions.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -95,7 +95,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.182+e322de2/Contained-1.0.0-nightly.182+e322de2.dmg" length="9365709" type="application/octet-stream" sparkle:edSignature="UGluuvQJDfSJI4QrYBtQpqYQYvO73ZekY/goQPLNZXOz3/szutkFmZzz4DC6sEXFLReG1L+zkq7ce81Kl5yIDw=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.185+2a1b950/Contained-1.0.0-nightly.185+2a1b950.dmg" length="9336596" type="application/octet-stream" sparkle:edSignature="rG1Lt60n+PSa5uIdzAv8pfRuDomE+4fDMk9UpkkF2T9T5gIFwjOfBlFsBMpG4jq2mnCPMco1NtRda23K71yhAQ=="/>
         </item>
     </channel>
 </rss>
