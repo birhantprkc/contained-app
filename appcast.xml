@@ -3,20 +3,15 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.208+2e4d3c3</title>
-            <pubDate>Fri, 14 Aug 2026 19:33:42 +0000</pubDate>
-            <sparkle:version>208</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.208+2e4d3c3</sparkle:shortVersionString>
+            <title>1.0.0-nightly.211+51ca192</title>
+            <pubDate>Fri, 14 Aug 2026 20:29:23 +0000</pubDate>
+            <sparkle:version>211</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.211+51ca192</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
 <ul>
-<li>Fixed stale image-update badges reappearing after launch by consolidating duplicate persisted tag records and reconciling saved results with the live runtime inventory.</li>
-<li>Simplified navigation around the permanent toolbar and panels, retiring the legacy sidebar and redundant full-page utility routes.</li>
-<li>Made card footer metadata fill and scroll within the space left by intrinsic action buttons, and removed the five-widget limit from container personalization.</li>
-<li>Muted stopped container cards to a grey, softened compact state that restores their configured color and full content emphasis on hover without affecting expanded details.</li>
-<li>Made Containers the sole, flat primary grid; moved Networks into the System panel; and replaced the old page/filter controls with one top-left menu for session-local named groups, sorting, and the running-only filter.</li>
-<li>Unified design-card expansion across containers, images, resources, and palette results with panel-matched radii, non-displacing header controls, and pinned header, widget, and footer chrome.</li>
+<li>Refined image and container cards with clearer tag typography, stable update-check ordering, shared grid elevation, smoother expanded-card shadows, tighter responsive sizing, and more flexible window dimensions.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -99,7 +94,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.208+2e4d3c3/Contained-1.0.0-nightly.208+2e4d3c3.dmg" length="9475049" type="application/octet-stream" sparkle:edSignature="tB/vENKaDKldVmb5KMo+tErBBfkXBhIkchuC7Gb4Oe9BWe6lJbjq1RpCDzjV2JbMgc+Abt/RzU5ECD595ugLDA=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.211+51ca192/Contained-1.0.0-nightly.211+51ca192.dmg" length="9475301" type="application/octet-stream" sparkle:edSignature="46eKOY+Zy7BL65sfdWV/raRLVtT72ujcIJmkCkkI2VY7JR9eJ4CvHzA6WGzxiO1fAYFWuRLdA6YyeAX4UITFBQ=="/>
         </item>
     </channel>
 </rss>
