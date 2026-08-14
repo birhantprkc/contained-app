@@ -1,3 +1,7 @@
+- Fixed stale image-update badges reappearing after launch by consolidating duplicate persisted tag records and reconciling saved results with the live runtime inventory.
+- Simplified navigation around the permanent toolbar and panels, retiring the legacy sidebar and redundant full-page utility routes.
+- Made card footer metadata fill and scroll within the space left by intrinsic action buttons, and removed the five-widget limit from container personalization.
+
 ### Changed
 
 - Container cards now infer a browser shortcut from their first published TCP port, with an optional per-container URL override for hosts and paths. Appearance inheritance now covers only icon, tint, and background; nickname, URL, status, and widgets remain container-specific. Available updates stay visible as the far-right footer action.
