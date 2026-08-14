@@ -1,3 +1,7 @@
+### Added
+
+- Container cards now surface a dedicated Update action when their image tag has changed, while the context menu provides a safe Rebuild action at all times; both preserve local settings and the container's prior running or stopped state.
+
 ### Changed
 
 - The menu-bar extra is now a compact runtime center with a stable sheet-material backdrop, shared System-panel cards, per-runtime status and controls, resource metrics, and focused quick actions.
