@@ -1,3 +1,7 @@
+### Fixed
+
+- Rebuilding Apple containers now preserves named volumes instead of treating their backing disk images as bind-mounted directories, and resolves replacement and recovery configuration before deleting the original container.
+
 ### Added
 
 - Container cards now surface a dedicated Update action when their image tag has changed, while the context menu provides a safe Rebuild action at all times; both preserve local settings and the container's prior running or stopped state.
