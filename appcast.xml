@@ -3,15 +3,18 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.214+c40fb06</title>
-            <pubDate>Fri, 14 Aug 2026 20:49:43 +0000</pubDate>
-            <sparkle:version>214</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.214+c40fb06</sparkle:shortVersionString>
+            <title>1.0.0-nightly.217+d4a2fea</title>
+            <pubDate>Fri, 14 Aug 2026 22:47:12 +0000</pubDate>
+            <sparkle:version>217</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.217+d4a2fea</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
+<p># Changes Since Last Nightly</p>
 <ul>
-<li>Prevented sparkline strokes and marks from clipping at chart boundaries, and expanded container sorting by activity, age, runtime, and attention state.</li>
+<li>Group all local tags and versions from the same image repository into one image card while preserving each tag's digest and runtime availability.</li>
+<li>Split the Images panel into Updates and Images pages, with update-aware defaults and page-specific image management controls.</li>
+<li>Reduced panel opening work by projecting and refreshing only the active page.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -94,7 +97,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.214+c40fb06/Contained-1.0.0-nightly.214+c40fb06.dmg" length="9484159" type="application/octet-stream" sparkle:edSignature="whzwGX/fMne93nUobc8xK5SO5gf5qw6hQdN7Hlhz0jUKZn6tkuOLTw/ED420gSiioCU/28bBRMEU4nfARMWdDg=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.217+d4a2fea/Contained-1.0.0-nightly.217+d4a2fea.dmg" length="9498128" type="application/octet-stream" sparkle:edSignature="5PhmljR9bVLXjwRQznLOFDx3532fPTV8Gb/Nc+OpD0aSFLPTG+9V9sjn993flmEFT4sTnPGn/nKD6fBwHLIMCQ=="/>
         </item>
     </channel>
 </rss>
