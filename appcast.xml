@@ -3,13 +3,19 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.203+1f0f3db</title>
-            <pubDate>Fri, 14 Aug 2026 15:15:21 +0000</pubDate>
-            <sparkle:version>203</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.203+1f0f3db</sparkle:shortVersionString>
+            <title>1.0.0-nightly.205+38a00e1</title>
+            <pubDate>Fri, 14 Aug 2026 16:34:36 +0000</pubDate>
+            <sparkle:version>205</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.205+38a00e1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<h2>Full Release Notes</h2>
+            <description><![CDATA[<h2>Changes Since Last Nightly</h2>
+<ul>
+<li>Fixed stale image-update badges reappearing after launch by consolidating duplicate persisted tag records and reconciling saved results with the live runtime inventory.</li>
+<li>Simplified navigation around the permanent toolbar and panels, retiring the legacy sidebar and redundant full-page utility routes.</li>
+<li>Made card footer metadata fill and scroll within the space left by intrinsic action buttons, and removed the five-widget limit from container personalization.</li>
+</ul>
+<h2>Full Release Notes</h2>
 <h3>Highlights</h3>
 <ul>
 <li>First complete Contained release: a native macOS 26 SwiftUI control surface for Apple's `container` CLI.</li>
@@ -90,7 +96,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.203+1f0f3db/Contained-1.0.0-nightly.203+1f0f3db.dmg" length="9580405" type="application/octet-stream" sparkle:edSignature="5FONhhTSODC+Ky1ekgb+THFx8SGM0WNch0/ESE4zt85WqDDJymzjn3VDm07aFElb/z/2hdd4QJgIvURUQgkvBw=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.205+38a00e1/Contained-1.0.0-nightly.205+38a00e1.dmg" length="9512889" type="application/octet-stream" sparkle:edSignature="Tf6FnC3XYjgHqXVUxW8ktABQEr+vA5LavBdUleYjS49kiCUkd02/wejkh753gtc3Mokr/EPiiI7hO5hk1282Bg=="/>
         </item>
     </channel>
 </rss>
