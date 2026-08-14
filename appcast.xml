@@ -3,15 +3,15 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.211+51ca192</title>
-            <pubDate>Fri, 14 Aug 2026 20:29:23 +0000</pubDate>
-            <sparkle:version>211</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.211+51ca192</sparkle:shortVersionString>
+            <title>1.0.0-nightly.214+c40fb06</title>
+            <pubDate>Fri, 14 Aug 2026 20:49:43 +0000</pubDate>
+            <sparkle:version>214</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.214+c40fb06</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
 <ul>
-<li>Refined image and container cards with clearer tag typography, stable update-check ordering, shared grid elevation, smoother expanded-card shadows, tighter responsive sizing, and more flexible window dimensions.</li>
+<li>Prevented sparkline strokes and marks from clipping at chart boundaries, and expanded container sorting by activity, age, runtime, and attention state.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -94,7 +94,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.211+51ca192/Contained-1.0.0-nightly.211+51ca192.dmg" length="9475301" type="application/octet-stream" sparkle:edSignature="46eKOY+Zy7BL65sfdWV/raRLVtT72ujcIJmkCkkI2VY7JR9eJ4CvHzA6WGzxiO1fAYFWuRLdA6YyeAX4UITFBQ=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.214+c40fb06/Contained-1.0.0-nightly.214+c40fb06.dmg" length="9484159" type="application/octet-stream" sparkle:edSignature="whzwGX/fMne93nUobc8xK5SO5gf5qw6hQdN7Hlhz0jUKZn6tkuOLTw/ED420gSiioCU/28bBRMEU4nfARMWdDg=="/>
         </item>
     </channel>
 </rss>
