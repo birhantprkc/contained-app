@@ -3,16 +3,17 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.194+cd1da3d</title>
-            <pubDate>Fri, 14 Aug 2026 12:37:23 +0000</pubDate>
-            <sparkle:version>194</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.194+cd1da3d</sparkle:shortVersionString>
+            <title>1.0.0-nightly.197+d623c75</title>
+            <pubDate>Fri, 14 Aug 2026 13:59:03 +0000</pubDate>
+            <sparkle:version>197</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.197+d623c75</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
-<h3>Fixed</h3>
+<h3>Changed</h3>
 <ul>
-<li>Image and image-group customization now follows normalized image references, preserving existing styles when pulls replace a tag's digest or runtimes report an equivalent reference spelling.</li>
+<li>Color selectors now lead with the inherited accent and a custom `#RRGGBB` option before SwiftUI's standard Apple color palette. Selecting custom reveals a dedicated “Custom” row using the host form's normal alignment and `#007AFF` as its example. The app-accent picker inherits the native macOS accent; other pickers inherit the selected app accent, which now scopes both native controls and explicit accent-colored selection, navigation, status, chart, and resource chrome throughout the app.</li>
+<li>Shared panel and form rows now move wide controls beneath their labels instead of clipping or squeezing important titles.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -95,7 +96,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.194+cd1da3d/Contained-1.0.0-nightly.194+cd1da3d.dmg" length="9401659" type="application/octet-stream" sparkle:edSignature="YUlOrQPtzNDc1TUW/M+VCHZQv5VREBB8fGI6h4H5oYM42e9FxIigdSLER+UKTkOfr2540AYZtojSnseT+hWqDw=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.197+d623c75/Contained-1.0.0-nightly.197+d623c75.dmg" length="9441133" type="application/octet-stream" sparkle:edSignature="rDSXEesIJfAz40dWB3jUU3fCfmCVoUZu/m50cPhEwgEzKSgze9T/I/UkJXT8esBoxnLuoSJG1qRlHGUKTGJoCQ=="/>
         </item>
     </channel>
 </rss>
