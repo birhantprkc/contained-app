@@ -3,17 +3,17 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.197+d623c75</title>
-            <pubDate>Fri, 14 Aug 2026 13:59:03 +0000</pubDate>
-            <sparkle:version>197</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.197+d623c75</sparkle:shortVersionString>
+            <title>1.0.0-nightly.200+1e03335</title>
+            <pubDate>Fri, 14 Aug 2026 14:51:11 +0000</pubDate>
+            <sparkle:version>200</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.200+1e03335</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
 <h3>Changed</h3>
 <ul>
-<li>Color selectors now lead with the inherited accent and a custom `#RRGGBB` option before SwiftUI's standard Apple color palette. Selecting custom reveals a dedicated “Custom” row using the host form's normal alignment and `#007AFF` as its example. The app-accent picker inherits the native macOS accent; other pickers inherit the selected app accent, which now scopes both native controls and explicit accent-colored selection, navigation, status, chart, and resource chrome throughout the app.</li>
-<li>Shared panel and form rows now move wide controls beneath their labels instead of clipping or squeezing important titles.</li>
+<li>Container cards now infer a browser shortcut from their first published TCP port, with an optional per-container URL override for hosts and paths. Appearance inheritance now covers only icon, tint, and background; nickname, URL, status, and widgets remain container-specific. Available updates stay visible as the far-right footer action.</li>
+<li>Image, tag, and container nicknames now stay scoped to the resource being customized. Image and tag names compose in card references (for example, `nice-image:latest`) without nickname-only changes disabling inherited appearance.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -96,7 +96,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.197+d623c75/Contained-1.0.0-nightly.197+d623c75.dmg" length="9441133" type="application/octet-stream" sparkle:edSignature="rDSXEesIJfAz40dWB3jUU3fCfmCVoUZu/m50cPhEwgEzKSgze9T/I/UkJXT8esBoxnLuoSJG1qRlHGUKTGJoCQ=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.200+1e03335/Contained-1.0.0-nightly.200+1e03335.dmg" length="9453049" type="application/octet-stream" sparkle:edSignature="PkqlaQ02Yr57QAFDBgvNmL21AyyyzmTBe2ky8AjHMjUoC2MOXTaJP+RSVILBoHdiYmU6YyWY775vLxhb9lUGAA=="/>
         </item>
     </channel>
 </rss>
