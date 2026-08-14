@@ -1,3 +1,9 @@
+# Changes Since Last Nightly
+
+- Group all local tags and versions from the same image repository into one image card while preserving each tag's digest and runtime availability.
+- Split the Images panel into Updates and Images pages, with update-aware defaults and page-specific image management controls.
+- Reduced panel opening work by projecting and refreshing only the active page.
+
 - Prevented sparkline strokes and marks from clipping at chart boundaries, and expanded container sorting by activity, age, runtime, and attention state.
 
 - Refined image and container cards with clearer tag typography, stable update-check ordering, shared grid elevation, smoother expanded-card shadows, tighter responsive sizing, and more flexible window dimensions.
