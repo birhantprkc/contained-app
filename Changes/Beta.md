@@ -1,5 +1,10 @@
 ### Changed
 
+- Container cards now infer a browser shortcut from their first published TCP port, with an optional per-container URL override for hosts and paths. Appearance inheritance now covers only icon, tint, and background; nickname, URL, status, and widgets remain container-specific. Available updates stay visible as the far-right footer action.
+- Image, tag, and container nicknames now stay scoped to the resource being customized. Image and tag names compose in card references (for example, `nice-image:latest`) without nickname-only changes disabling inherited appearance.
+
+### Changed
+
 - Color selectors now lead with the inherited accent and a custom `#RRGGBB` option before SwiftUI's standard Apple color palette. Selecting custom reveals a dedicated “Custom” row using the host form's normal alignment and `#007AFF` as its example. The app-accent picker inherits the native macOS accent; other pickers inherit the selected app accent, which now scopes both native controls and explicit accent-colored selection, navigation, status, chart, and resource chrome throughout the app.
 - Shared panel and form rows now move wide controls beneath their labels instead of clipping or squeezing important titles.
 
