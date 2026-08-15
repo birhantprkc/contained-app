@@ -3,18 +3,18 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.217+d4a2fea</title>
-            <pubDate>Fri, 14 Aug 2026 22:47:12 +0000</pubDate>
-            <sparkle:version>217</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.217+d4a2fea</sparkle:shortVersionString>
+            <title>1.0.0-nightly.220+c461951</title>
+            <pubDate>Sat, 15 Aug 2026 00:28:34 +0000</pubDate>
+            <sparkle:version>220</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.220+c461951</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
-<p># Changes Since Last Nightly</p>
 <ul>
-<li>Group all local tags and versions from the same image repository into one image card while preserving each tag's digest and runtime availability.</li>
-<li>Split the Images panel into Updates and Images pages, with update-aware defaults and page-specific image management controls.</li>
-<li>Reduced panel opening work by projecting and refreshing only the active page.</li>
+<li>Fixed container context menus flashing during live metric updates while keeping card footer values and sparklines current.</li>
+<li>Moved expanded-container page commands into the shared card header, which now adapts to Logs, Terminal, and Files.</li>
+<li>Consolidated expanded container metrics into a Statistics page with selectable range and interpolation, independent hourly-snapping history charts, peak-preserving virtualization, latest-first positioning, theme colors, and standard graph padding; moved live metric cards into a flat horizontal Overview lane with the same shadowless card material and radius as the historical graphs, aligned Overview with Run/Edit/Settings section styling, and added a dedicated container Alerts page.</li>
+<li>Made the Overview metric lane edge-to-edge with inset-matched gaps, moved Terminal shell selection into the page header, and placed the transparent terminal layer inside the same shadowless material and corner radius used by Statistics graphs.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -97,7 +97,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.217+d4a2fea/Contained-1.0.0-nightly.217+d4a2fea.dmg" length="9498128" type="application/octet-stream" sparkle:edSignature="5PhmljR9bVLXjwRQznLOFDx3532fPTV8Gb/Nc+OpD0aSFLPTG+9V9sjn993flmEFT4sTnPGn/nKD6fBwHLIMCQ=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.220+c461951/Contained-1.0.0-nightly.220+c461951.dmg" length="9535121" type="application/octet-stream" sparkle:edSignature="Lf7IZJkqvEIGCUUJdfpqdJdWpInl8cfGmcGoS3u2czPWB2qY/6+faku3+4xGk1XEevZMrlz5YilxBWSa3qDADw=="/>
         </item>
     </channel>
 </rss>
