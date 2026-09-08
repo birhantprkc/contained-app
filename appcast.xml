@@ -3,18 +3,15 @@
     <channel>
         <title>Contained</title>
         <item>
-            <title>1.0.0-nightly.220+c461951</title>
-            <pubDate>Sat, 15 Aug 2026 00:28:34 +0000</pubDate>
-            <sparkle:version>220</sparkle:version>
-            <sparkle:shortVersionString>1.0.0-nightly.220+c461951</sparkle:shortVersionString>
+            <title>1.0.0-nightly.224+0accbf6</title>
+            <pubDate>Tue, 08 Sep 2026 02:36:08 +0000</pubDate>
+            <sparkle:version>224</sparkle:version>
+            <sparkle:shortVersionString>1.0.0-nightly.224+0accbf6</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<h2>Changes Since Last Nightly</h2>
 <ul>
-<li>Fixed container context menus flashing during live metric updates while keeping card footer values and sparklines current.</li>
-<li>Moved expanded-container page commands into the shared card header, which now adapts to Logs, Terminal, and Files.</li>
-<li>Consolidated expanded container metrics into a Statistics page with selectable range and interpolation, independent hourly-snapping history charts, peak-preserving virtualization, latest-first positioning, theme colors, and standard graph padding; moved live metric cards into a flat horizontal Overview lane with the same shadowless card material and radius as the historical graphs, aligned Overview with Run/Edit/Settings section styling, and added a dedicated container Alerts page.</li>
-<li>Made the Overview metric lane edge-to-edge with inset-matched gaps, moved Terminal shell selection into the page header, and placed the transparent terminal layer inside the same shadowless material and corner radius used by Statistics graphs.</li>
+<li>Verify image-update recreations use the freshly pulled image and survive startup, and surface streamed pull failures instead of reporting false success.</li>
 </ul>
 <h2>Full Release Notes</h2>
 <h3>Highlights</h3>
@@ -97,7 +94,7 @@
 <li>Activity events created before unread tracking are treated as unread on first launch.</li>
 </ul>
 ]]></description>
-            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.220+c461951/Contained-1.0.0-nightly.220+c461951.dmg" length="9535121" type="application/octet-stream" sparkle:edSignature="Lf7IZJkqvEIGCUUJdfpqdJdWpInl8cfGmcGoS3u2czPWB2qY/6+faku3+4xGk1XEevZMrlz5YilxBWSa3qDADw=="/>
+            <enclosure url="https://github.com/tdeverx/contained-app/releases/download/v1.0.0-nightly.224+0accbf6/Contained-1.0.0-nightly.224+0accbf6.dmg" length="9563560" type="application/octet-stream" sparkle:edSignature="lb5Z1J5ODQsV3mJkTSxTgrbaXJuBBwbPwUCq7UJYMnqOmy3i/gfT0ZV5TbDblNCoZ4bZIE+kVOtUHWRNld6RDw=="/>
         </item>
     </channel>
 </rss>
